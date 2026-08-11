@@ -801,6 +801,7 @@
         let isAdmin = false;
         let selectedAvatar = '🦁';
         let pollTimer = null;
+        let listPollTimer = null;
         let previousEliminatedStatus = false;
 
         function savePlayerNameLocally(val) {
@@ -863,25 +864,36 @@
             if (navEl) navEl.classList.add('active');
         }
 
+        // 1-Second Realtime Polling for Available Rooms List
+        function startRoomListPolling() {
+            fetchAvailableRooms();
+            if (listPollTimer) clearInterval(listPollTimer);
+            listPollTimer = setInterval(fetchAvailableRooms, 1000);
+        }
+
+        function stopRoomListPolling() {
+            if (listPollTimer) clearInterval(listPollTimer);
+        }
+
         async function fetchAvailableRooms() {
             try {
                 const res = await fetch('/api/list_rooms');
                 const data = await res.json();
                 const container = document.getElementById('availableRoomsList');
-                container.innerHTML = '';
-
+                
                 if (!data.rooms || data.rooms.length === 0) {
                     container.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-muted);">Нет активных бункеров. Создайте первый ниже!</div>';
                     return;
                 }
 
+                let html = '';
                 data.rooms.forEach(r => {
                     let displayCode = r.code;
                     try {
                         displayCode = decodeURIComponent(r.code);
                     } catch(e){}
 
-                    container.innerHTML += `
+                    html += `
                         <div class="room-item-card" onclick="openJoinStep('${r.code}')">
                             <div>
                                 <strong style="color: var(--danger-red); font-size: 1rem;">Код: ${displayCode}</strong>
@@ -891,12 +903,14 @@
                         </div>
                     `;
                 });
+                container.innerHTML = html;
             } catch (e) {
                 console.log("Error loading rooms", e);
             }
         }
 
         function openJoinStep(code) {
+            stopRoomListPolling();
             let displayCode = code;
             try {
                 displayCode = decodeURIComponent(code);
@@ -915,6 +929,7 @@
         }
 
         function openCreateStep() {
+            stopRoomListPolling();
             document.getElementById('authRoomListStep').style.display = 'none';
             document.getElementById('authFormStep').style.display = 'block';
             document.getElementById('authStepTitle').innerText = '👑 Создание Нового Отбора';
@@ -928,7 +943,7 @@
         function backToRoomListStep() {
             document.getElementById('authRoomListStep').style.display = 'block';
             document.getElementById('authFormStep').style.display = 'none';
-            fetchAvailableRooms();
+            startRoomListPolling();
         }
 
         async function submitCreateRoom() {
@@ -990,6 +1005,7 @@
         }
 
         function onJoinedRoom(initialData) {
+            stopRoomListPolling();
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('gameWrapper').style.display = 'block';
             document.getElementById('bottomNav').style.display = 'flex';
@@ -1022,7 +1038,7 @@
             document.getElementById('bottomNav').style.display = 'none';
             document.getElementById('headerRoomBadge').innerText = 'Не в игре';
             restoreSavedPlayerName();
-            fetchAvailableRooms();
+            startRoomListPolling();
         }
 
         async function restoreSession() {
@@ -1030,7 +1046,7 @@
             restoreSavedPlayerName();
             const saved = localStorage.getItem('bunker_session');
             if (!saved) {
-                fetchAvailableRooms();
+                startRoomListPolling();
                 return;
             }
 
@@ -1045,11 +1061,11 @@
                     onJoinedRoom();
                 } else {
                     clearSession();
-                    fetchAvailableRooms();
+                    startRoomListPolling();
                 }
             } catch (e) {
                 clearSession();
-                fetchAvailableRooms();
+                startRoomListPolling();
             }
         }
 
