@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Бункер — Система Голосования</title>
+    <title>Бункер — Отбор Кандидатов</title>
     
     <!-- PWA Primary Meta Tags -->
     <link rel="manifest" href="/manifest.json">
@@ -103,7 +103,7 @@
 
         /* Fixed Header */
         header {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
@@ -112,11 +112,15 @@
             padding-left: 12px;
             padding-right: 12px;
             background: rgba(17, 24, 39, 0.98);
+            backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 100;
+            max-width: 480px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         .brand-title {
@@ -205,7 +209,7 @@
             overflow-y: auto;
             padding: 14px;
             margin-top: calc(52px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(75px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: calc(85px + env(safe-area-inset-bottom, 12px));
         }
 
         .card {
@@ -399,7 +403,7 @@
             padding: 4px;
         }
 
-        /* Tab Content Control */
+        /* Animated Tab Content Control */
         .tab-panel {
             display: none;
         }
@@ -408,21 +412,24 @@
             display: block;
         }
 
-        /* Strictly Glued Bottom Navigation Bar */
+        /* Pinned Bottom Navigation Bar Flush to Viewport Edge */
         nav.bottom-nav {
-            position: absolute;
+            position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             height: calc(58px + env(safe-area-inset-bottom, 0px));
             padding-bottom: env(safe-area-inset-bottom, 0px);
             background: rgba(17, 24, 39, 0.98);
-            backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
             align-items: center;
-            z-index: 100;
+            z-index: 1000;
+            max-width: 480px;
+            margin: 0 auto;
         }
 
         .nav-item {
@@ -435,24 +442,24 @@
             font-weight: 500;
             cursor: pointer;
             gap: 3px;
-            width: 24%;
+            width: 32%;
             height: 42px;
             border-radius: 12px;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .nav-item.active {
             color: var(--danger-red);
-            background: rgba(239, 68, 68, 0.12);
+            background: rgba(239, 68, 68, 0.14);
         }
 
         .nav-item .icon {
-            font-size: 1.15rem;
-            transition: transform 0.2s ease;
+            font-size: 1.25rem;
+            transition: transform 0.25s ease;
         }
 
         .nav-item.active .icon {
-            transform: scale(1.15);
+            transform: scale(1.18);
             color: var(--danger-red);
         }
 
@@ -552,7 +559,7 @@
                         <div class="avatar-option" onclick="selectAvatar(this, '👽')">👽</div>
                     </div>
 
-                    <!-- Поля для входа в существующий бункер -->
+                    <!-- Поля для входа в существующий бункер без автозаполнения -->
                     <div id="joinFields">
                         <div class="form-group">
                             <label>Код Выбранного Бункера:</label>
@@ -569,7 +576,7 @@
                         <button class="btn" onclick="submitJoinRoom()"><i class="fa-solid fa-right-to-bracket"></i> Войти в Бункер</button>
                     </div>
 
-                    <!-- Поля для создания нового бункера -->
+                    <!-- Поля для создания нового бункера без автозаполнения -->
                     <div id="createFields" style="display: none;">
                         <div class="form-group">
                             <label>Код Нового Бункера:</label>
@@ -593,68 +600,64 @@
                 </div>
             </div>
 
-            <!-- ИГРОВОЙ ИНТЕРФЕЙС -->
+            <!-- ИГРОВОЙ ИНТЕРФЕЙС С АНИМИРОВАННЫМИ ВКЛАДКАМИ -->
             <div id="gameWrapper" style="display: none;">
 
-                <!-- ВКЛАДКА 1: СОСТОЯНИЕ БУНКЕРА И СПИСОК -->
-                <div id="panelBunker" class="tab-panel active animate__animated animate__fadeIn">
+                <!-- ВКЛАДКА 1: КАНДИДАТЫ В БУНКЕР -->
+                <div id="panelBunker" class="tab-panel active animate__animated animate__fadeInUp">
                     <div class="card">
-                        <div class="card-title"><i class="fa-solid fa-shield-halved"></i> Состояние Бункера</div>
+                        <div class="card-title"><i class="fa-solid fa-shield-halved"></i> Отбор Кандидатов</div>
                         <div style="font-size: 0.9rem; margin-bottom: 12px;">
-                            Статус: <strong id="gameStatusText" style="color: var(--accent-amber);">Ожидание игроков</strong>
+                            Статус: <strong id="gameStatusText" style="color: var(--accent-amber);">Ожидание участников</strong>
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-muted);">
-                            Раунд: <strong id="roundText" style="color: white;">1</strong> | 
-                            Мест в бункере: <strong id="seatsText" style="color: white;">3</strong>
+                            Раунд отбора: <strong id="roundText" style="color: white;">1</strong> | 
+                            Пропусков в бункер: <strong id="seatsText" style="color: white;">3</strong>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-title"><i class="fa-solid fa-users"></i> Участники в Бункере</div>
+                        <div class="card-title"><i class="fa-solid fa-users"></i> Претенденты на Бункер</div>
                         <ul class="player-list" id="playerList"></ul>
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ (СТРОЧКИ ИГРОКОВ ВМЕСТО ВЫПАДАЮЩЕГО СПИСКА) -->
-                <div id="panelVote" class="tab-panel animate__animated animate__fadeIn">
+                <!-- ВКЛАДКА 2: ВЫБЫВАНИЕ И ГОЛОСОВАНИЕ ПРОТИВ -->
+                <div id="panelVote" class="tab-panel animate__animated animate__fadeInUp">
                     <div class="card">
-                        <div class="card-title"><i class="fa-solid fa-user-xmark"></i> Голосование ПРОТИВ</div>
+                        <div class="card-title"><i class="fa-solid fa-user-xmark"></i> Исключение из Отбора</div>
                         
                         <div id="votingFormContainer">
                             <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                                Нажмите кнопку напротив игрока, чтобы отдать свой голос <strong>на его выбывание</strong>:
+                                Выберите кандидата, против которого вы отдаете голос <strong>на выбывание из претендентов</strong>:
                             </div>
                             
                             <ul class="player-list" id="votingCandidatesList"></ul>
                         </div>
 
-                        <div id="votedSuccessMessage" style="display: none; text-align: center; padding: 20px; color: var(--success-green); font-weight: 600;">
-                            ✅ Ваш голос ПРОТИВ принят и учтен! Ожидайте подведения итогов раунда.
+                        <div id="votedSuccessMessage" style="display: none; text-align: center; padding: 18px; color: var(--success-green); font-weight: 600;">
+                            ✅ Ваш голос ПРОТИВ принят и учтен! Ожидайте подведения итогов отбора.
                         </div>
 
-                        <div id="eliminatedVoteWarning" style="display: none; text-align: center; padding: 20px; color: var(--danger-red); font-weight: 600;">
-                            🚫 Вы выбыли из бункера и больше не можете голосовать!
+                        <div id="eliminatedVoteWarning" style="display: none; text-align: center; padding: 18px; color: var(--danger-red); font-weight: 600;">
+                            🚫 Вы выбыли из отбора и больше не участвуете в голосовании.
                         </div>
                     </div>
-                </div>
 
-                <!-- ВКЛАДКА 3: РЕЗУЛЬТАТЫ -->
-                <div id="panelResults" class="tab-panel animate__animated animate__fadeIn">
-                    <div class="card">
-                        <div class="card-title"><i class="fa-solid fa-chart-pie"></i> Результаты Раунда</div>
-                        
-                        <div id="eliminatedResultText" style="text-align: center; font-size: 1.1rem; color: var(--danger-red); margin: 12px 0; font-weight: 700;">
-                            Ожидание завершения голосования...
+                    <!-- ВСТРОЕННЫЙ БЛОК ИТОГОВ РАУНДА -->
+                    <div class="card" style="margin-top: 14px;">
+                        <div class="card-title"><i class="fa-solid fa-chart-pie"></i> Итоги Голосования</div>
+                        <div id="eliminatedResultText" style="text-align: center; font-size: 1.05rem; color: var(--danger-red); margin: 8px 0; font-weight: 700;">
+                            Голосование в процессе...
                         </div>
-
                         <div class="form-group" id="votesSummaryContainer"></div>
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 4: УПРАВЛЕНИЕ ИГРОЙ -->
-                <div id="panelAdmin" class="tab-panel animate__animated animate__fadeIn">
+                <!-- ВКЛАДКА 3: УПРАВЛЕНИЕ ИГРОЙ -->
+                <div id="panelAdmin" class="tab-panel animate__animated animate__fadeInUp">
                     <div class="card">
-                        <div class="card-title"><i class="fa-solid fa-sliders"></i> Управление Игрой</div>
+                        <div class="card-title"><i class="fa-solid fa-sliders"></i> Управление Отбором</div>
                         
                         <div id="adminControls">
                             <button class="btn btn-amber" style="margin-bottom: 10px;" onclick="adminStartGame()"><i class="fa-solid fa-play"></i> Запустить Голосование</button>
@@ -664,7 +667,7 @@
                         </div>
 
                         <div id="notAdminNotice" style="display: none; color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">
-                            Управление голосованием и раундами доступно создателю бункера.
+                            Управление голосованием и раундами доступно организатору отбора.
                         </div>
                     </div>
                 </div>
@@ -673,19 +676,15 @@
 
         </main>
 
-        <!-- STRICTLY ANCHORED BOTTOM NAVIGATION BAR -->
+        <!-- STRICTLY PINNED 3-TAB ANIMATED BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
-                <span class="icon"><i class="fa-solid fa-shield-halved"></i></span>
-                <span>Бункер</span>
+                <span class="icon"><i class="fa-solid fa-users"></i></span>
+                <span>Кандидаты</span>
             </div>
             <div class="nav-item" onclick="switchTab('panelVote', this)">
                 <span class="icon"><i class="fa-solid fa-check-to-slot"></i></span>
-                <span>Голосовать</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('panelResults', this)">
-                <span class="icon"><i class="fa-solid fa-chart-pie"></i></span>
-                <span>Итоги</span>
+                <span>Выбывание</span>
             </div>
             <div class="nav-item" onclick="switchTab('panelAdmin', this)">
                 <span class="icon"><i class="fa-solid fa-sliders"></i></span>
@@ -841,11 +840,16 @@
             if (pollTimer) clearInterval(pollTimer);
         }
 
+        // Animated Tab Switching
         function switchTab(panelId, navEl) {
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            const panels = document.querySelectorAll('.tab-panel');
+            panels.forEach(p => {
+                p.classList.remove('active', 'animate__animated', 'animate__fadeInUp');
+            });
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            document.getElementById(panelId).classList.add('active');
+            const targetPanel = document.getElementById(panelId);
+            targetPanel.classList.add('active', 'animate__animated', 'animate__fadeInUp');
             if (navEl) navEl.classList.add('active');
         }
 
@@ -869,11 +873,11 @@
 
                     container.innerHTML += `
                         <div class="room-item-card" onclick="openJoinStep('${r.code}')">
-                            <div style="min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;">
-                                <strong style="color: var(--danger-red); font-size: 1rem; word-break: break-all;">Код: ${displayCode}</strong>
-                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Участников: ${r.active_count} | Мест: ${r.seats}</div>
+                            <div>
+                                <strong style="color: var(--danger-red); font-size: 1rem;">Код: ${displayCode}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Кандидатов: ${r.active_count} | Мест в бункере: ${r.seats}</div>
                             </div>
-                            <span class="badge badge-active" style="flex-shrink: 0; white-space: nowrap;">Войти ➔</span>
+                            <span class="badge badge-active">Войти ➔</span>
                         </div>
                     `;
                 });
@@ -890,7 +894,7 @@
 
             document.getElementById('authRoomListStep').style.display = 'none';
             document.getElementById('authFormStep').style.display = 'block';
-            document.getElementById('authStepTitle').innerText = `🚪 Вход в Бункер (${displayCode})`;
+            document.getElementById('authStepTitle').innerText = `🚪 Вход в Отбор (${displayCode})`;
             document.getElementById('joinFields').style.display = 'block';
             document.getElementById('createFields').style.display = 'none';
 
@@ -903,7 +907,7 @@
         function openCreateStep() {
             document.getElementById('authRoomListStep').style.display = 'none';
             document.getElementById('authFormStep').style.display = 'block';
-            document.getElementById('authStepTitle').innerText = '👑 Создание Нового Бункера';
+            document.getElementById('authStepTitle').innerText = '👑 Создание Нового Отбора';
             document.getElementById('joinFields').style.display = 'none';
             document.getElementById('createFields').style.display = 'block';
 
@@ -943,7 +947,7 @@
 
             saveSession(currentRoom, currentPlayerId, isAdmin);
             onJoinedRoom(data.room_data);
-            Toast.fire({ icon: 'success', title: 'Бункер успешно создан!' });
+            Toast.fire({ icon: 'success', title: 'Отбор в бункер успешно создан!' });
         }
 
         async function submitJoinRoom() {
@@ -971,7 +975,7 @@
 
             saveSession(currentRoom, currentPlayerId, isAdmin);
             onJoinedRoom();
-            Toast.fire({ icon: 'success', title: 'Успешный вход в бункер!' });
+            Toast.fire({ icon: 'success', title: 'Успешный вход в отбор!' });
         }
 
         function onJoinedRoom(initialData) {
@@ -1040,6 +1044,7 @@
             }
         }
 
+        // Silent Background Polling
         async function fetchRoomStatus() {
             if (!currentRoom) return;
 
@@ -1059,10 +1064,10 @@
             document.getElementById('seatsText').innerText = data.seats;
             
             let statusMap = {
-                'lobby': 'Ожидание игроков (Лобби)',
-                'voting': 'Идет голосование!',
-                'round_results': 'Итоги раунда',
-                'finished': 'Игра завершена! (Бункер укомплектован)'
+                'lobby': 'Ожидание кандидатов (Лобби)',
+                'voting': 'Идет голосование на выбывание!',
+                'round_results': 'Итоги раунда отбора',
+                'finished': 'Отбор завершен! Участники сформированы.'
             };
             document.getElementById('gameStatusText').innerText = statusMap[data.status] || data.status;
 
@@ -1096,7 +1101,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span class="badge ${isEliminated ? 'badge-eliminated' : 'badge-active'}">
-                                ${isEliminated ? 'Выбыл' : 'В игре'}
+                                ${isEliminated ? 'Выбыл из отбора' : 'В отборе'}
                             </span>
                             ${kickBtnHtml}
                         </div>
@@ -1104,18 +1109,18 @@
                 `;
             });
 
-            // Update Voting Candidates List (Direct Rows with Vote Button!)
+            // Update Voting Candidates List
             const me = data.players.find(p => p.id === currentPlayerId);
             const isMeEliminated = me && me.status === 'eliminated';
 
-            // TRIGGER DRAMATIC ELIMINATION MODAL NOTIFICATION!
+            // TRIGGER ELIMINATION NOTIFICATION
             if (isMeEliminated && !previousEliminatedStatus) {
                 previousEliminatedStatus = true;
                 Swal.fire({
-                    title: '🚫 ВЫ НЕ ПОПАДАЕТЕ В БУНКЕР!',
+                    title: '🚫 ВЫ ВЫБЫЛИ ИЗ ОТБОРА!',
                     html: `<div style="font-size: 1.05rem; color: #ef4444; margin-top: 10px; line-height: 1.5;">
                             Большинство участников проголосовали <strong>ПРОТИВ вас</strong>.<br><br>
-                            К сожалению, вы выбываете из бункера и больше не можете принимать участие в голосовании!
+                            К сожалению, вы не попадаете в бункер и выбываете из голосования!
                           </div>`,
                     icon: 'error',
                     background: '#111827',
@@ -1157,7 +1162,7 @@
                                     <span class="player-name">${p.name}</span>
                                 </div>
                                 <button class="btn btn-vote-row" ${!isVotingActive ? 'disabled' : ''} onclick="submitVoteForTarget('${p.id}')">
-                                    <i class="fa-solid fa-user-xmark"></i> Против
+                                    <i class="fa-solid fa-user-xmark"></i> Исключить
                                 </button>
                             </li>
                         `;
@@ -1165,9 +1170,9 @@
                 }
             }
 
-            // Results Screen
+            // Results Summary Block inside Voting Tab
             if (data.last_eliminated) {
-                document.getElementById('eliminatedResultText').innerText = `🚫 Из бункера выбывает: ${data.last_eliminated}`;
+                document.getElementById('eliminatedResultText').innerText = `🚫 Из отбора выбывает: ${data.last_eliminated}`;
             } else {
                 document.getElementById('eliminatedResultText').innerText = `Голосование в процессе (${data.voted_count} из ${data.active_count} проголосовали)`;
             }
@@ -1233,7 +1238,7 @@
             if (data.error) Toast.fire({ icon: 'error', title: data.error });
             else {
                 fetchRoomStatus();
-                switchTab('panelResults');
+                switchTab('panelVote');
             }
         }
 
