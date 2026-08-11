@@ -42,7 +42,7 @@ def create_room():
     room_code = data.get("room_code", "").strip().upper()
     password = data.get("password", "").strip()
     seats = int(data.get("seats", 3))
-    admin_name = data.get("admin_name", "Админ").strip()
+    admin_name = data.get("admin_name", "Игрок 1").strip()
 
     if not room_code or not password:
         return jsonify({"error": "Укажите код бункера и пароль"}), 400
@@ -145,10 +145,10 @@ def kick_player():
 
     room = ROOMS[room_code]
     if room["admin_id"] != admin_id:
-        return jsonify({"error": "Только администратор может удалять игроков"}), 403
+        return jsonify({"error": "Только создатель бункера может удалять игроков"}), 403
 
     if target_id == admin_id:
-        return jsonify({"error": "Администратор не может удалить себя"}), 400
+        return jsonify({"error": "Создатель не может удалить себя"}), 400
 
     if target_id in room["players"]:
         del room["players"][target_id]
@@ -166,7 +166,7 @@ def delete_room():
 
     room = ROOMS[room_code]
     if room["admin_id"] != admin_id:
-        return jsonify({"error": "Только администратор может удалить бункер"}), 403
+        return jsonify({"error": "Только создатель бункера может удалить бункер"}), 403
 
     del ROOMS[room_code]
     return jsonify({"success": True})
@@ -182,7 +182,7 @@ def start_game():
 
     room = ROOMS[room_code]
     if room["admin_id"] != player_id:
-        return jsonify({"error": "Только администратор может начать игру"}), 403
+        return jsonify({"error": "Только создатель может начать игру"}), 403
 
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     if len(active_players) <= room["seats"]:
@@ -235,7 +235,7 @@ def tally_votes():
 
     room = ROOMS[room_code]
     if room["admin_id"] != player_id:
-        return jsonify({"error": "Только администратор может подводить итоги"}), 403
+        return jsonify({"error": "Только создатель бункера может подводить итоги"}), 403
 
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     tally = {p["id"]: 0 for p in active_players}
@@ -281,7 +281,7 @@ def next_round():
 
     room = ROOMS[room_code]
     if room["admin_id"] != player_id:
-        return jsonify({"error": "Только администратор может запускать следующий раунд"}), 403
+        return jsonify({"error": "Только создатель бункера может запускать следующий раунд"}), 403
 
     room["round"] += 1
     room["status"] = "voting"
