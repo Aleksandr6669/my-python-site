@@ -419,7 +419,7 @@
             display: block;
         }
 
-        /* Perfectly Balanced Glassmorphic Floating Bottom Navigation Dock */
+        /* Balanced Glassmorphic Floating Bottom Navigation Dock */
         nav.bottom-nav {
             position: absolute;
             bottom: calc(4px + env(safe-area-inset-bottom, 0px));
@@ -1010,7 +1010,7 @@
             }
 
             if (pollTimer) clearInterval(pollTimer);
-            pollTimer = setInterval(fetchRoomStatus, 2000);
+            pollTimer = setInterval(fetchRoomStatus, 1000);
         }
 
         function leaveRoom() {
@@ -1053,13 +1053,19 @@
             }
         }
 
-        // Silent Background Polling
+        // Silent 1-Second Background Polling
         async function fetchRoomStatus() {
             if (!currentRoom) return;
 
             try {
                 const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
                 const data = await res.json();
+
+                if (res.status === 404 && data.code === "ROOM_DELETED") {
+                    Toast.fire({ icon: 'warning', title: 'Бункер был удален организатором!' });
+                    leaveRoom();
+                    return;
+                }
 
                 if (res.ok) {
                     renderRoomData(data);

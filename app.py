@@ -68,6 +68,8 @@ def list_rooms():
     cleanup_expired_rooms()
     active_rooms = []
     for code, room in ROOMS.items():
+        if room.get("deleted"):
+            continue
         clean_code = unquote(code)
         active_rooms.append({
             "code": clean_code,
@@ -107,6 +109,7 @@ def create_room():
         "round": 1,
         "created_at": created_at,
         "expires_at": expires_at,
+        "deleted": False,
         "admin_id": admin_id,
         "players": {
             admin_id: {"id": admin_id, "name": admin_name, "avatar": avatar, "status": "active", "voted_for": None}
@@ -151,7 +154,7 @@ def join_room():
         return jsonify({"error": "Заполните все поля"}), 400
 
     # Auto-recovery for serverless cold restarts
-    if room_code not in ROOMS:
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
         created_at = time.time()
         expires_at = created_at + (2 * 3600)
         admin_id = str(uuid.uuid4())
@@ -163,6 +166,7 @@ def join_room():
             "round": 1,
             "created_at": created_at,
             "expires_at": expires_at,
+            "deleted": False,
             "admin_id": admin_id,
             "players": {
                 admin_id: {"id": admin_id, "name": player_name, "avatar": avatar, "status": "active", "voted_for": None}
@@ -228,7 +232,10 @@ def room_status(room_code):
     room_code = unquote(room_code).upper()
     player_id = request.args.get("player_id")
 
-    # Auto-recreate room on serverless cold starts
+    if room_code in ROOMS and ROOMS[room_code].get("deleted"):
+        return jsonify({"error": "Бункер был удален организатором", "code": "ROOM_DELETED"}), 404
+
+    # Auto-recreate room on serverless cold starts if missing
     if room_code not in ROOMS:
         created_at = time.time()
         expires_at = created_at + (2 * 3600)
@@ -241,6 +248,7 @@ def room_status(room_code):
             "round": 1,
             "created_at": created_at,
             "expires_at": expires_at,
+            "deleted": False,
             "admin_id": admin_id,
             "players": {
                 admin_id: {"id": admin_id, "name": "Игрок", "avatar": "👤", "status": "active", "voted_for": None}
@@ -288,8 +296,8 @@ def kick_player():
     admin_id = data.get("admin_id")
     target_id = data.get("target_id")
 
-    if room_code not in ROOMS:
-        return jsonify({"error": "Бункер не найден"}), 404
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+        return jsonify({"error": "Бункер не найден", "code": "ROOM_DELETED"}), 404
 
     room = ROOMS[room_code]
     if room["admin_id"] != admin_id:
@@ -319,7 +327,7 @@ def delete_room():
     if room["admin_id"] != admin_id:
         return jsonify({"error": "Только создатель бункера может удалить бункер"}), 403
 
-    del ROOMS[room_code]
+    room["deleted"] = True
     save_rooms()
     return jsonify({"success": True})
 
@@ -331,7 +339,7 @@ def start_game():
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
 
-    if room_code not in ROOMS:
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -360,7 +368,7 @@ def cast_vote():
     voter_id = data.get("voter_id")
     target_id = data.get("target_id")
 
-    if room_code not in ROOMS:
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -390,7 +398,7 @@ def tally_votes():
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
 
-    if room_code not in ROOMS:
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -404,7 +412,7 @@ def tally_votes():
         if p["voted_for"] in tally:
             tally[p["voted_for"]] += 1
 
-    # Find max voted
+    # Eliminate candidate with strictly the highest number of votes AGAINST
     max_votes = -1
     eliminated_id = None
     for pid, count in tally.items():
@@ -413,7 +421,7 @@ def tally_votes():
             eliminated_id = pid
 
     eliminated_player = room["players"].get(eliminated_id)
-    if eliminated_player:
+    if eliminated_player and max_votes > 0:
         eliminated_player["status"] = "eliminated"
         room["last_eliminated"] = f"{eliminated_player.get('avatar', '👤')} {eliminated_player['name']}"
 
@@ -439,7 +447,7 @@ def next_round():
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
 
-    if room_code not in ROOMS:
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
