@@ -401,15 +401,6 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .kick-btn {
-            background: none;
-            border: none;
-            color: var(--danger-red);
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 4px;
-        }
-
         /* Animated Tab Content Control */
         .tab-panel {
             display: none;
@@ -690,7 +681,8 @@
                             <input type="text" id="settingsPlayerNameInput" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false">
                         </div>
 
-                        <button class="btn btn-amber" onclick="submitUpdateProfile()"><i class="fa-solid fa-floppy-disk"></i> Сохранить Настройки</button>
+                        <button class="btn btn-amber" style="margin-bottom: 12px;" onclick="submitUpdateProfile()"><i class="fa-solid fa-floppy-disk"></i> Сохранить Профиль</button>
+                        <button class="btn btn-outline" onclick="leaveRoom()"><i class="fa-solid fa-right-from-bracket"></i> Выйти из Бункера</button>
                     </div>
 
                     <!-- РАЗДЕЛ: УПРАВЛЕНИЕ ОРГАНИЗАТОРА (ТОЛЬКО ДЛЯ АДМИНА) -->
@@ -701,6 +693,14 @@
                             <button class="btn btn-amber" style="margin-bottom: 10px;" onclick="adminStartGame()"><i class="fa-solid fa-play"></i> Запустить Голосование</button>
                             <button class="btn" style="margin-bottom: 10px;" onclick="adminTallyVotes()"><i class="fa-solid fa-square-check"></i> Подвести Итоги Раунда</button>
                             <button class="btn btn-outline" style="margin-bottom: 14px;" onclick="adminNextRound()"><i class="fa-solid fa-forward"></i> Начать Следующий Раунд</button>
+
+                            <!-- СМЕНА ПАРОЛЯ ДЛЯ АДМИНА -->
+                            <div class="form-group" style="margin-top: 14px;">
+                                <label>Новый пароль бункера:</label>
+                                <input type="password" id="adminNewPasswordInput" placeholder="Придумайте новый пароль" autocomplete="new-password" autocorrect="off">
+                            </div>
+                            <button class="btn btn-amber" style="margin-bottom: 14px;" onclick="adminChangePassword()"><i class="fa-solid fa-key"></i> Сменить Пароль</button>
+
                             <button class="btn btn-outline" style="border-color: var(--danger-red); color: var(--danger-red);" onclick="adminDeleteRoom()"><i class="fa-solid fa-trash"></i> Удалить этот Бункер</button>
                         </div>
 
@@ -1071,6 +1071,33 @@
             fetchRoomStatus();
         }
 
+        async function adminChangePassword() {
+            const newPass = document.getElementById('adminNewPasswordInput').value.trim();
+            if (!newPass) {
+                Toast.fire({ icon: 'warning', title: 'Укажите новый пароль!' });
+                return;
+            }
+
+            const res = await fetch('/api/change_password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    room_code: currentRoom,
+                    admin_id: currentPlayerId,
+                    new_password: newPass
+                })
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                Toast.fire({ icon: 'error', title: data.error });
+                return;
+            }
+
+            document.getElementById('adminNewPasswordInput').value = '';
+            Toast.fire({ icon: 'success', title: 'Пароль бункера успешно изменен!' });
+        }
+
         function onJoinedRoom(initialData) {
             stopRoomListPolling();
             document.getElementById('authScreen').style.display = 'none';
@@ -1096,7 +1123,17 @@
             pollTimer = setInterval(fetchRoomStatus, 1000);
         }
 
-        function leaveRoom() {
+        async function leaveRoom() {
+            if (currentRoom && currentPlayerId) {
+                try {
+                    await fetch('/api/leave_room', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ room_code: currentRoom, player_id: currentPlayerId })
+                    });
+                } catch(e){}
+            }
+
             clearSession();
             document.getElementById('authScreen').style.display = 'block';
             document.getElementById('authRoomListStep').style.display = 'block';
@@ -1197,12 +1234,6 @@
             playerList.innerHTML = '';
             data.players.forEach(p => {
                 const isEliminated = p.status === 'eliminated';
-                const isTargetAdmin = p.id === data.admin_id;
-                
-                let kickBtnHtml = '';
-                if (isAdmin && !isTargetAdmin && p.id !== currentPlayerId) {
-                    kickBtnHtml = `<button class="kick-btn" onclick="adminKickPlayer('${p.id}')"><i class="fa-solid fa-xmark"></i></button>`;
-                }
 
                 playerList.innerHTML += `
                     <li class="player-item ${isEliminated ? 'eliminated' : ''}">
@@ -1214,7 +1245,6 @@
                             <span class="badge ${isEliminated ? 'badge-eliminated' : 'badge-active'}">
                                 ${isEliminated ? 'Выбыл из отбора' : 'В отборе'}
                             </span>
-                            ${kickBtnHtml}
                         </div>
                     </li>
                 `;
@@ -1392,31 +1422,6 @@
             else {
                 leaveRoom();
             }
-        }
-
-        async function adminKickPlayer(targetId) {
-            const result = await Swal.fire({
-                title: 'Исключить игрока?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#4b5563',
-                confirmButtonText: 'Да, исключить',
-                cancelButtonText: 'Отмена',
-                background: '#111827',
-                color: '#fff'
-            });
-
-            if (!result.isConfirmed) return;
-
-            const res = await fetch('/api/kick_player', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({room_code: currentRoom, admin_id: currentPlayerId, target_id: targetId})
-            });
-            const data = await res.json();
-            if (data.error) Toast.fire({ icon: 'error', title: data.error });
-            else fetchRoomStatus();
         }
 
         // Initialize App Session & Theme

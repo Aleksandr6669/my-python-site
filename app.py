@@ -313,27 +313,39 @@ def update_profile():
     save_rooms()
     return jsonify({"success": True})
 
-@app.route("/api/kick_player", methods=["POST"])
-def kick_player():
+@app.route("/api/change_password", methods=["POST"])
+def change_password():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     admin_id = data.get("admin_id")
-    target_id = data.get("target_id")
+    new_password = data.get("new_password", "").strip()
 
     if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
-        return jsonify({"error": "Бункер не найден", "code": "ROOM_DELETED"}), 404
+        return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
     if room["admin_id"] != admin_id:
-        return jsonify({"error": "Только создатель бункера может удалять игроков"}), 403
+        return jsonify({"error": "Только создатель бункера может менять пароль"}), 403
 
-    if target_id == admin_id:
-        return jsonify({"error": "Создатель не может удалить себя"}), 400
+    if not new_password:
+        return jsonify({"error": "Пароль не может быть пустым"}), 400
 
-    if target_id in room["players"]:
-        del room["players"][target_id]
+    room["password"] = new_password
+    save_rooms()
+    return jsonify({"success": True})
+
+@app.route("/api/leave_room", methods=["POST"])
+def leave_room_api():
+    global ROOMS
+    ROOMS = load_rooms()
+    data = request.json or {}
+    room_code = unquote(data.get("room_code", "")).upper()
+    player_id = data.get("player_id")
+
+    if room_code in ROOMS and player_id in ROOMS[room_code]["players"]:
+        del ROOMS[room_code]["players"][player_id]
         save_rooms()
 
     return jsonify({"success": True})
