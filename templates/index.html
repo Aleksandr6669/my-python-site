@@ -474,7 +474,7 @@
             <!-- ЭКРАН ВХОДА И ВЫБОРА БУНКЕРА -->
             <div id="authScreen">
                 
-                <!-- ШАГ 1: СПИСОК ВСЕХ БУНКЕРОВИ КНОПКА СОЗДАНИЯ -->
+                <!-- ШАГ 1: СПИСОК ВСЕХ БУНКЕРОВ И КНОПКА СОЗДАНИЯ -->
                 <div id="authRoomListStep">
                     <div class="card">
                         <div class="card-title">🔍 Активные Бункеры</div>
@@ -655,16 +655,39 @@
     </div>
 
     <script>
-        // PWA Install
+        // PWA Install & Auto-Update
         let deferredPrompt;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
+            navigator.serviceWorker.register('/sw.js').then((reg) => {
+                reg.update(); // Force check for SW update on app launch
+                reg.onupdatefound = () => {
+                    const newWorker = reg.installing;
+                    if (newWorker) {
+                        newWorker.onstatechange = () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log("[PWA] New version detected, auto-reloading...");
+                                window.location.reload();
+                            }
+                        };
+                    }
+                };
+            });
+
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
         }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             document.getElementById('pwaBtn').style.display = 'block';
         });
+
         function installPWA() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();

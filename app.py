@@ -9,16 +9,22 @@ ROOMS = {}
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    response = render_template("index.html")
+    return response
 
 @app.route("/manifest.json")
 def manifest():
-    return send_from_directory('static', 'manifest.json', mimetype='application/json')
+    response = send_from_directory('static', 'manifest.json', mimetype='application/json')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
 
 @app.route("/sw.js")
 def service_worker():
     response = send_from_directory('static', 'sw.js', mimetype='application/javascript')
     response.headers['Service-Worker-Allowed'] = '/'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
     return response
 
 # --- API ENDPOINTS ---
