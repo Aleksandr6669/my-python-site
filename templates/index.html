@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Бункер — Отбор Кандидатов</title>
+    <title>Бункер — Система Голосования</title>
     
     <!-- PWA Primary Meta Tags -->
     <link rel="manifest" href="/manifest.json">
@@ -103,7 +103,7 @@
 
         /* Fixed Header */
         header {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
@@ -118,9 +118,6 @@
             justify-content: space-between;
             align-items: center;
             z-index: 100;
-            max-width: 480px;
-            margin: 0 auto;
-            width: 100%;
         }
 
         .brand-title {
@@ -178,38 +175,13 @@
             backdrop-filter: blur(8px);
         }
 
-        .leave-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            font-size: 0.75rem;
-            border-radius: 8px;
-            padding: 0 10px;
-            height: 32px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            flex-shrink: 0;
-            white-space: nowrap;
-            transition: all 0.2s;
-            backdrop-filter: blur(8px);
-        }
-
-        .leave-btn:hover, .leave-btn:active {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: var(--danger-red);
-            color: var(--danger-red);
-        }
-
         /* Main Content Scrollable Area */
         main {
             flex: 1;
             overflow-y: auto;
             padding: 14px;
             margin-top: calc(52px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(85px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: calc(75px + env(safe-area-inset-bottom, 12px));
         }
 
         .card {
@@ -414,7 +386,7 @@
 
         /* Pinned Bottom Navigation Bar Flush to Viewport Edge */
         nav.bottom-nav {
-            position: fixed;
+            position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
@@ -428,8 +400,6 @@
             justify-content: space-around;
             align-items: center;
             z-index: 1000;
-            max-width: 480px;
-            margin: 0 auto;
         }
 
         .nav-item {
@@ -509,9 +479,6 @@
                     <i class="fa-solid fa-palette"></i>
                 </button>
                 <div class="room-badge" id="headerRoomBadge">Не в игре</div>
-                <button class="leave-btn" id="leaveBtn" style="display: none;" onclick="leaveRoom()">
-                    <i class="fa-solid fa-right-from-bracket"></i> Выйти
-                </button>
             </div>
         </header>
 
@@ -594,6 +561,10 @@
                             <label>Мест в бункере (Победителей):</label>
                             <input type="number" id="createSeats" value="3" min="1" max="15">
                         </div>
+                        <div class="form-group">
+                            <label>Срок жизни бункера (часов):</label>
+                            <input type="number" id="createLifetime" value="2" min="1" max="24">
+                        </div>
                         <button class="btn btn-amber" onclick="submitCreateRoom()"><i class="fa-solid fa-rocket"></i> Создать и Войти</button>
                     </div>
 
@@ -629,7 +600,7 @@
                         
                         <div id="votingFormContainer">
                             <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                                Выберите кандидата, против которого вы отдаете голос <strong>на выбывание из претендентов</strong>:
+                                Нажмите кнопку напротив кандидата, чтобы отдать голос <strong>на его выбывание</strong>:
                             </div>
                             
                             <ul class="player-list" id="votingCandidatesList"></ul>
@@ -926,13 +897,14 @@
             const password = document.getElementById('createPassword').value.trim();
             const adminName = document.getElementById('createAdminName').value.trim();
             const seats = document.getElementById('createSeats').value;
+            const lifetime = document.getElementById('createLifetime').value;
 
             if (adminName) savePlayerNameLocally(adminName);
 
             const res = await fetch('/api/create_room', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({room_code: code, password, seats, admin_name: adminName, avatar: selectedAvatar})
+                body: JSON.stringify({room_code: code, password, seats, lifetime_hours: lifetime, admin_name: adminName, avatar: selectedAvatar})
             });
 
             const data = await res.json();
@@ -982,7 +954,6 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('gameWrapper').style.display = 'block';
             document.getElementById('bottomNav').style.display = 'flex';
-            document.getElementById('leaveBtn').style.display = 'flex';
 
             let displayCode = currentRoom;
             try {
@@ -1010,7 +981,6 @@
             document.getElementById('authFormStep').style.display = 'none';
             document.getElementById('gameWrapper').style.display = 'none';
             document.getElementById('bottomNav').style.display = 'none';
-            document.getElementById('leaveBtn').style.display = 'none';
             document.getElementById('headerRoomBadge').innerText = 'Не в игре';
             restoreSavedPlayerName();
             fetchAvailableRooms();

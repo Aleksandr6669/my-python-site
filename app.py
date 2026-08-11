@@ -3,12 +3,13 @@ import uuid
 import os
 import json
 import tempfile
+import time
 from urllib.parse import unquote
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 TEMP_DIR = tempfile.gettempdir()
-ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v3.json")
+ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v4.json")
 
 def load_rooms():
     if os.path.exists(ROOMS_FILE):
@@ -29,6 +30,15 @@ def save_rooms():
 
 # Storage for rooms
 ROOMS = load_rooms()
+
+def cleanup_expired_rooms():
+    global ROOMS
+    now = time.time()
+    expired = [code for code, r in ROOMS.items() if r.get("expires_at") and now > r["expires_at"]]
+    if expired:
+        for code in expired:
+            del ROOMS[code]
+        save_rooms()
 
 @app.route("/")
 def index():
@@ -55,6 +65,7 @@ def service_worker():
 def list_rooms():
     global ROOMS
     ROOMS = load_rooms()
+    cleanup_expired_rooms()
     active_rooms = []
     for code, room in ROOMS.items():
         clean_code = unquote(code)
@@ -71,16 +82,21 @@ def list_rooms():
 def create_room():
     global ROOMS
     ROOMS = load_rooms()
+    cleanup_expired_rooms()
     data = request.json or {}
     raw_code = data.get("room_code", "").strip()
     room_code = unquote(raw_code).upper()
     password = data.get("password", "").strip()
     seats = int(data.get("seats", 3))
+    lifetime_hours = float(data.get("lifetime_hours", 2.0))
     admin_name = data.get("admin_name", "Игрок 1").strip()
     avatar = data.get("avatar", "🦁")
 
     if not room_code or not password:
         return jsonify({"error": "Укажите код бункера и пароль"}), 400
+
+    created_at = time.time()
+    expires_at = created_at + (lifetime_hours * 3600)
 
     admin_id = str(uuid.uuid4())
     ROOMS[room_code] = {
@@ -89,6 +105,8 @@ def create_room():
         "seats": seats,
         "status": "lobby",
         "round": 1,
+        "created_at": created_at,
+        "expires_at": expires_at,
         "admin_id": admin_id,
         "players": {
             admin_id: {"id": admin_id, "name": admin_name, "avatar": avatar, "status": "active", "voted_for": None}
@@ -121,6 +139,7 @@ def create_room():
 def join_room():
     global ROOMS
     ROOMS = load_rooms()
+    cleanup_expired_rooms()
     data = request.json or {}
     raw_code = data.get("room_code", "").strip()
     room_code = unquote(raw_code).upper()
@@ -128,11 +147,13 @@ def join_room():
     player_name = data.get("player_name", "").strip()
     avatar = data.get("avatar", "🦊")
 
-    if not room_code or not password or not player_name:
+    if not room_code or not player_name:
         return jsonify({"error": "Заполните все поля"}), 400
 
     # Auto-recovery for serverless cold restarts
     if room_code not in ROOMS:
+        created_at = time.time()
+        expires_at = created_at + (2 * 3600)
         admin_id = str(uuid.uuid4())
         ROOMS[room_code] = {
             "code": room_code,
@@ -140,6 +161,8 @@ def join_room():
             "seats": 3,
             "status": "lobby",
             "round": 1,
+            "created_at": created_at,
+            "expires_at": expires_at,
             "admin_id": admin_id,
             "players": {
                 admin_id: {"id": admin_id, "name": player_name, "avatar": avatar, "status": "active", "voted_for": None}
@@ -156,7 +179,7 @@ def join_room():
         })
 
     room = ROOMS[room_code]
-    if room["password"] != password:
+    if room["password"] and room["password"] != password:
         return jsonify({"error": "Неверный пароль к бункеру"}), 403
 
     # Reconnect logic: Check if player with same name already exists in room
@@ -201,11 +224,14 @@ def join_room():
 def room_status(room_code):
     global ROOMS
     ROOMS = load_rooms()
+    cleanup_expired_rooms()
     room_code = unquote(room_code).upper()
     player_id = request.args.get("player_id")
 
-    # Auto-recreate room on serverless cold starts if missing so status NEVER returns 404
+    # Auto-recreate room on serverless cold starts
     if room_code not in ROOMS:
+        created_at = time.time()
+        expires_at = created_at + (2 * 3600)
         admin_id = player_id if player_id else str(uuid.uuid4())
         ROOMS[room_code] = {
             "code": room_code,
@@ -213,6 +239,8 @@ def room_status(room_code):
             "seats": 3,
             "status": "lobby",
             "round": 1,
+            "created_at": created_at,
+            "expires_at": expires_at,
             "admin_id": admin_id,
             "players": {
                 admin_id: {"id": admin_id, "name": "Игрок", "avatar": "👤", "status": "active", "voted_for": None}
