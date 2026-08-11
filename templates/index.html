@@ -98,11 +98,12 @@
             margin: 0 auto;
             position: relative;
             background: var(--bg-dark);
+            overflow: hidden;
         }
 
         /* Fixed Header */
         header {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
@@ -116,9 +117,6 @@
             justify-content: space-between;
             align-items: center;
             z-index: 100;
-            max-width: 480px;
-            margin: 0 auto;
-            width: 100%;
         }
 
         .brand-title {
@@ -207,7 +205,7 @@
             overflow-y: auto;
             padding: 14px;
             margin-top: calc(52px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(85px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: calc(75px + env(safe-area-inset-bottom, 12px));
         }
 
         .card {
@@ -308,6 +306,13 @@
             white-space: nowrap;
         }
 
+        .btn-vote-row {
+            height: 38px;
+            padding: 0 12px;
+            font-size: 0.82rem;
+            width: auto;
+        }
+
         .btn:active {
             transform: scale(0.98);
         }
@@ -403,14 +408,14 @@
             display: block;
         }
 
-        /* Clean Animated Bottom Navigation Bar Glued Strictly to Bottom Edge */
+        /* Strictly Glued Bottom Navigation Bar */
         nav.bottom-nav {
-            position: fixed;
+            position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            height: calc(56px + env(safe-area-inset-bottom, 12px));
-            padding-bottom: env(safe-area-inset-bottom, 12px);
+            height: calc(58px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
             background: rgba(17, 24, 39, 0.98);
             backdrop-filter: blur(16px);
             border-top: 1px solid var(--border-color);
@@ -418,8 +423,6 @@
             justify-content: space-around;
             align-items: center;
             z-index: 100;
-            max-width: 480px;
-            margin: 0 auto;
         }
 
         .nav-item {
@@ -428,7 +431,7 @@
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             font-weight: 500;
             cursor: pointer;
             gap: 2px;
@@ -444,7 +447,7 @@
         }
 
         .nav-item .icon {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             transition: transform 0.2s ease;
         }
 
@@ -549,7 +552,7 @@
                         <div class="avatar-option" onclick="selectAvatar(this, '👽')">👽</div>
                     </div>
 
-                    <!-- Поля для входа в существующий бункер без автозаполнения -->
+                    <!-- Поля для входа в существующий бункер -->
                     <div id="joinFields">
                         <div class="form-group">
                             <label>Код Выбранного Бункера:</label>
@@ -566,7 +569,7 @@
                         <button class="btn" onclick="submitJoinRoom()"><i class="fa-solid fa-right-to-bracket"></i> Войти в Бункер</button>
                     </div>
 
-                    <!-- Поля для создания нового бункера без автозаполнения -->
+                    <!-- Поля для создания нового бункера -->
                     <div id="createFields" style="display: none;">
                         <div class="form-group">
                             <label>Код Нового Бункера:</label>
@@ -612,22 +615,17 @@
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ -->
+                <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ (СТРОЧКИ ИГРОКОВ ВМЕСТО ВЫПАДАЮЩЕГО СПИСКА) -->
                 <div id="panelVote" class="tab-panel animate__animated animate__fadeIn">
                     <div class="card">
-                        <div class="card-title"><i class="fa-solid fa-ban"></i> Голосование ПРОТИВ</div>
+                        <div class="card-title"><i class="fa-solid fa-user-xmark"></i> Голосование ПРОТИВ</div>
                         
                         <div id="votingFormContainer">
                             <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                                Выберите участника, против которого отдаете свой голос <strong>на выбывание</strong>:
+                                Нажмите кнопку напротив игрока, чтобы отдать свой голос <strong>на его выбывание</strong>:
                             </div>
-                            <div class="form-group">
-                                <label>Кандидат НА ВЫЛЕТ из бункера:</label>
-                                <select id="voteTargetSelect">
-                                    <option value="">-- Выберите игрока --</option>
-                                </select>
-                            </div>
-                            <button class="btn" id="castVoteBtn" onclick="submitVote()"><i class="fa-solid fa-user-xmark"></i> Проголосовать ПРОТИВ</button>
+                            
+                            <ul class="player-list" id="votingCandidatesList"></ul>
                         </div>
 
                         <div id="votedSuccessMessage" style="display: none; text-align: center; padding: 20px; color: var(--success-green); font-weight: 600;">
@@ -675,22 +673,22 @@
 
         </main>
 
-        <!-- FIXED ANIMATED BOTTOM NAVIGATION BAR -->
+        <!-- STRICTLY ANCHORED BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
-                <span class="icon"><i class="fa-solid fa-house"></i></span>
+                <span class="icon"><i class="fa-solid fa-shield-halved"></i></span>
                 <span>Бункер</span>
             </div>
             <div class="nav-item" onclick="switchTab('panelVote', this)">
-                <span class="icon"><i class="fa-solid fa-vote-nay"></i></span>
+                <span class="icon"><i class="fa-solid fa-check-to-slot"></i></span>
                 <span>Голосовать</span>
             </div>
             <div class="nav-item" onclick="switchTab('panelResults', this)">
-                <span class="icon"><i class="fa-solid fa-chart-column"></i></span>
+                <span class="icon"><i class="fa-solid fa-chart-pie"></i></span>
                 <span>Итоги</span>
             </div>
             <div class="nav-item" onclick="switchTab('panelAdmin', this)">
-                <span class="icon"><i class="fa-solid fa-gear"></i></span>
+                <span class="icon"><i class="fa-solid fa-sliders"></i></span>
                 <span>Управление</span>
             </div>
         </nav>
@@ -1091,7 +1089,7 @@
                 `;
             });
 
-            // Update Voting Select & Elimination Notification
+            // Update Voting Candidates List (Direct Rows with Vote Button!)
             const me = data.players.find(p => p.id === currentPlayerId);
             const isMeEliminated = me && me.status === 'eliminated';
 
@@ -1128,11 +1126,28 @@
                 document.getElementById('votedSuccessMessage').style.display = 'none';
                 document.getElementById('eliminatedVoteWarning').style.display = 'none';
 
-                const targetSelect = document.getElementById('voteTargetSelect');
-                targetSelect.innerHTML = '<option value="">-- Выберите игрока --</option>';
-                data.players.filter(p => p.status === 'active' && p.id !== currentPlayerId).forEach(p => {
-                    targetSelect.innerHTML += `<option value="${p.id}">${p.avatar || '👤'} ${p.name}</option>`;
-                });
+                const candidatesList = document.getElementById('votingCandidatesList');
+                candidatesList.innerHTML = '';
+                const activeTargets = data.players.filter(p => p.status === 'active' && p.id !== currentPlayerId);
+
+                if (activeTargets.length === 0) {
+                    candidatesList.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-muted);">Нет доступных кандидатов для голосования.</div>';
+                } else {
+                    const isVotingActive = (data.status === 'voting');
+                    activeTargets.forEach(p => {
+                        candidatesList.innerHTML += `
+                            <li class="player-item">
+                                <div class="player-info">
+                                    <span class="player-avatar">${p.avatar || '👤'}</span>
+                                    <span class="player-name">${p.name}</span>
+                                </div>
+                                <button class="btn btn-vote-row" ${!isVotingActive ? 'disabled' : ''} onclick="submitVoteForTarget('${p.id}')">
+                                    <i class="fa-solid fa-user-xmark"></i> Против
+                                </button>
+                            </li>
+                        `;
+                    });
+                }
             }
 
             // Results Screen
@@ -1156,12 +1171,8 @@
             }
         }
 
-        async function submitVote() {
-            const targetId = document.getElementById('voteTargetSelect').value;
-            if (!targetId) {
-                Toast.fire({ icon: 'warning', title: 'Выберите против кого проголосовать!' });
-                return;
-            }
+        async function submitVoteForTarget(targetId) {
+            if (!targetId) return;
 
             const res = await fetch('/api/cast_vote', {
                 method: 'POST',
