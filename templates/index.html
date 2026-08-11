@@ -100,13 +100,13 @@
             background: var(--bg-dark);
         }
 
-        /* Fixed Header with Dynamic Theme Integration */
+        /* Fixed Header */
         header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: calc(56px + env(safe-area-inset-top, 0px));
+            height: calc(52px + env(safe-area-inset-top, 0px));
             padding-top: env(safe-area-inset-top, 0px);
             padding-left: 12px;
             padding-right: 12px;
@@ -140,7 +140,7 @@
         }
 
         .theme-palette-btn {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             border: 1px solid var(--border-color);
             color: white;
             border-radius: 8px;
@@ -159,7 +159,6 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-        /* Dynamic Theme Adaptive Room Badge */
         .room-badge {
             font-size: 0.75rem;
             background: rgba(255, 255, 255, 0.08);
@@ -177,7 +176,6 @@
             backdrop-filter: blur(8px);
         }
 
-        /* Dynamic Theme Adaptive Exit Button */
         .leave-btn {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--border-color);
@@ -203,17 +201,12 @@
             color: var(--danger-red);
         }
 
-        /* Toast Container Position Offset Below Header */
-        .toast-container-offset {
-            margin-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
-        }
-
         /* Main Content Scrollable Area */
         main {
             flex: 1;
             overflow-y: auto;
             padding: 14px;
-            margin-top: calc(56px + env(safe-area-inset-top, 0px));
+            margin-top: calc(52px + env(safe-area-inset-top, 0px));
             padding-bottom: calc(80px + env(safe-area-inset-bottom, 12px));
         }
 
@@ -489,7 +482,7 @@
 <body data-theme="red">
 
     <div class="app-wrapper">
-        <!-- FIXED HEADER WITH DYNAMIC THEME BADGES -->
+        <!-- FIXED HEADER -->
         <header>
             <div class="brand-title">БУНКЕР</div>
             <div class="header-actions">
@@ -695,18 +688,15 @@
     </div>
 
     <script>
-        // Toast Notification Helper (Offset below top header)
+        // Centered Toast Notification Helper
         const Toast = Swal.mixin({
             toast: true,
-            position: 'top',
+            position: 'center',
             showConfirmButton: false,
-            timer: 2500,
+            timer: 2200,
             timerProgressBar: true,
             background: '#1f2937',
-            color: '#fff',
-            customClass: {
-                container: 'toast-container-offset'
-            }
+            color: '#fff'
         });
 
         // Custom Theme Selection Modal

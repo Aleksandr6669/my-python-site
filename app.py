@@ -6,9 +6,8 @@ import tempfile
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# Use /tmp directory for serverless (Vercel / Lambda) writable filesystem compatibility
 TEMP_DIR = tempfile.gettempdir()
-ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v1.json")
+ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v2.json")
 
 def load_rooms():
     if os.path.exists(ROOMS_FILE):
@@ -27,7 +26,7 @@ def save_rooms():
     except Exception as e:
         print("Save rooms error:", e)
 
-# In-memory storage with file backup
+# Storage for rooms
 ROOMS = load_rooms()
 
 @app.route("/")
@@ -113,15 +112,37 @@ def join_room():
     player_name = data.get("player_name", "").strip()
     avatar = data.get("avatar", "🦊")
 
+    if not room_code or not password or not player_name:
+        return jsonify({"error": "Заполните все поля"}), 400
+
+    # Auto-recovery for serverless instances:
+    # If room does not exist in memory/tmp, create it on demand so user is never blocked!
     if room_code not in ROOMS:
-        return jsonify({"error": "Бункер с таким кодом не найден"}), 404
+        admin_id = str(uuid.uuid4())
+        ROOMS[room_code] = {
+            "code": room_code,
+            "password": password,
+            "seats": 3,
+            "status": "lobby",
+            "round": 1,
+            "admin_id": admin_id,
+            "players": {
+                admin_id: {"id": admin_id, "name": player_name, "avatar": avatar, "status": "active", "voted_for": None}
+            },
+            "last_eliminated": None,
+            "round_votes_summary": {}
+        }
+        save_rooms()
+        return jsonify({
+            "success": True,
+            "room_code": room_code,
+            "player_id": admin_id,
+            "is_admin": True
+        })
 
     room = ROOMS[room_code]
     if room["password"] != password:
         return jsonify({"error": "Неверный пароль к бункеру"}), 403
-
-    if not player_name:
-        return jsonify({"error": "Укажите ваше имя"}), 400
 
     # Reconnect logic: Check if player with same name already exists in room
     existing_player = None
@@ -173,8 +194,16 @@ def room_status(room_code):
 
     room = ROOMS[room_code]
 
+    # Auto-restore player if missing due to cold restart
     if player_id and player_id not in room["players"]:
-        return jsonify({"error": "Вы были исключены из бункера", "code": "PLAYER_KICKED"}), 403
+        room["players"][player_id] = {
+            "id": player_id,
+            "name": "Игрок",
+            "avatar": "👤",
+            "status": "active",
+            "voted_for": None
+        }
+        save_rooms()
 
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     voted_count = len([p for p in active_players if p["voted_for"] is not None])
