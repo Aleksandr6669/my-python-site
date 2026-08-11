@@ -207,7 +207,7 @@
             overflow-y: auto;
             padding: 14px;
             margin-top: calc(52px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(80px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: calc(85px + env(safe-area-inset-bottom, 12px));
         }
 
         .card {
@@ -230,7 +230,7 @@
             gap: 8px;
         }
 
-        /* Form Inputs */
+        /* Form Inputs with Autocomplete Off */
         .form-group {
             margin-bottom: 12px;
         }
@@ -403,16 +403,17 @@
             display: block;
         }
 
-        /* Fixed Bottom Navigation Bar */
+        /* Animated Bottom Navigation Bar Positioned at Very Bottom Edge */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: calc(60px + env(safe-area-inset-bottom, 0px));
+            height: calc(62px + env(safe-area-inset-bottom, 0px));
             padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: var(--nav-bg);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(17, 24, 39, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -427,21 +428,47 @@
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 500;
             cursor: pointer;
             gap: 3px;
             width: 25%;
             height: 100%;
-            transition: color 0.2s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
         }
 
         .nav-item .icon {
             font-size: 1.2rem;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s;
         }
 
         .nav-item.active {
             color: var(--danger-red);
+        }
+
+        .nav-item.active .icon {
+            transform: translateY(-3px) scale(1.18);
+            color: var(--danger-red);
+            filter: drop-shadow(0 0 8px var(--danger-red));
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 32px;
+            height: 3px;
+            background: var(--danger-red);
+            border-radius: 0 0 4px 4px;
+            opacity: 0;
+            transform: scaleX(0);
+            transition: transform 0.25s, opacity 0.25s;
+        }
+
+        .nav-item.active::after {
+            opacity: 1;
+            transform: scaleX(1);
         }
 
         .room-item-card {
@@ -540,36 +567,36 @@
                         <div class="avatar-option" onclick="selectAvatar(this, '👽')">👽</div>
                     </div>
 
-                    <!-- Поля для входа в существующий бункер -->
+                    <!-- Поля для входа в существующий бункер без автозаполнения -->
                     <div id="joinFields">
                         <div class="form-group">
                             <label>Код Выбранного Бункера:</label>
-                            <input type="text" id="joinRoomCode" readonly style="background: rgba(255,255,255,0.05); text-transform: uppercase;">
+                            <input type="text" id="joinRoomCode" readonly autocomplete="off" autocorrect="off" spellcheck="false" style="background: rgba(255,255,255,0.05); text-transform: uppercase;">
                         </div>
                         <div class="form-group">
                             <label>Пароль от бункера:</label>
-                            <input type="password" id="joinPassword" placeholder="Введите пароль">
+                            <input type="password" id="joinPassword" placeholder="Введите пароль" autocomplete="new-password" autocorrect="off">
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
-                            <input type="text" id="joinPlayerName" placeholder="Ваше имя">
+                            <input type="text" id="joinPlayerName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerNameLocally(this.value)">
                         </div>
                         <button class="btn" onclick="submitJoinRoom()"><i class="fa-solid fa-right-to-bracket"></i> Войти в Бункер</button>
                     </div>
 
-                    <!-- Поля для создания нового бункера -->
+                    <!-- Поля для создания нового бункера без автозаполнения -->
                     <div id="createFields" style="display: none;">
                         <div class="form-group">
                             <label>Код Нового Бункера:</label>
-                            <input type="text" id="createRoomCode" placeholder="Например: B1" style="text-transform: uppercase;">
+                            <input type="text" id="createRoomCode" placeholder="Например: B1" autocomplete="off" autocorrect="off" spellcheck="false" style="text-transform: uppercase;">
                         </div>
                         <div class="form-group">
                             <label>Придумайте Пароль:</label>
-                            <input type="password" id="createPassword" placeholder="Пароль для игроков">
+                            <input type="password" id="createPassword" placeholder="Пароль для игроков" autocomplete="new-password" autocorrect="off">
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
-                            <input type="text" id="createAdminName" placeholder="Ваше имя">
+                            <input type="text" id="createAdminName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerNameLocally(this.value)">
                         </div>
                         <div class="form-group">
                             <label>Мест в бункере (Победителей):</label>
@@ -666,7 +693,7 @@
 
         </main>
 
-        <!-- FIXED BOTTOM NAVIGATION BAR -->
+        <!-- ANIMATED FIXED BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon"><i class="fa-solid fa-house"></i></span>
@@ -787,6 +814,20 @@
         let pollTimer = null;
         let previousEliminatedStatus = false;
 
+        function savePlayerNameLocally(val) {
+            if (val) {
+                localStorage.setItem('bunker_saved_name', val.trim());
+            }
+        }
+
+        function restoreSavedPlayerName() {
+            const savedName = localStorage.getItem('bunker_saved_name') || '';
+            if (savedName) {
+                document.getElementById('joinPlayerName').value = savedName;
+                document.getElementById('createAdminName').value = savedName;
+            }
+        }
+
         function changeTheme(themeName) {
             document.body.setAttribute('data-theme', themeName);
             localStorage.setItem('bunker_theme', themeName);
@@ -865,6 +906,7 @@
 
             document.getElementById('joinRoomCode').value = code;
             document.getElementById('joinPassword').value = '';
+            restoreSavedPlayerName();
             document.getElementById('joinPassword').focus();
         }
 
@@ -875,6 +917,7 @@
             document.getElementById('joinFields').style.display = 'none';
             document.getElementById('createFields').style.display = 'block';
 
+            restoreSavedPlayerName();
             document.getElementById('createRoomCode').focus();
         }
 
@@ -889,6 +932,8 @@
             const password = document.getElementById('createPassword').value.trim();
             const adminName = document.getElementById('createAdminName').value.trim();
             const seats = document.getElementById('createSeats').value;
+
+            if (adminName) savePlayerNameLocally(adminName);
 
             const res = await fetch('/api/create_room', {
                 method: 'POST',
@@ -915,6 +960,8 @@
             const code = document.getElementById('joinRoomCode').value.trim();
             const password = document.getElementById('joinPassword').value.trim();
             const playerName = document.getElementById('joinPlayerName').value.trim();
+
+            if (playerName) savePlayerNameLocally(playerName);
 
             const res = await fetch('/api/join_room', {
                 method: 'POST',
@@ -961,11 +1008,13 @@
             document.getElementById('bottomNav').style.display = 'none';
             document.getElementById('leaveBtn').style.display = 'none';
             document.getElementById('headerRoomBadge').innerText = 'Не в игре';
+            restoreSavedPlayerName();
             fetchAvailableRooms();
         }
 
         async function restoreSession() {
             restoreTheme();
+            restoreSavedPlayerName();
             const saved = localStorage.getItem('bunker_session');
             if (!saved) {
                 fetchAvailableRooms();
