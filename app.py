@@ -9,8 +9,7 @@ ROOMS = {}
 
 @app.route("/")
 def index():
-    response = render_template("index.html")
-    return response
+    return render_template("index.html")
 
 @app.route("/manifest.json")
 def manifest():
@@ -97,6 +96,26 @@ def join_room():
     if not player_name:
         return jsonify({"error": "Укажите ваше имя"}), 400
 
+    # Reconnect logic: Check if player with same name already exists in room
+    existing_player = None
+    for p in room["players"].values():
+        if p["name"].lower() == player_name.lower():
+            existing_player = p
+            break
+
+    if existing_player:
+        player_id = existing_player["id"]
+        existing_player["avatar"] = avatar
+        is_admin = (player_id == room["admin_id"])
+        return jsonify({
+            "success": True,
+            "room_code": room_code,
+            "player_id": player_id,
+            "is_admin": is_admin,
+            "reconnected": True
+        })
+
+    # New player
     player_id = str(uuid.uuid4())
     room["players"][player_id] = {
         "id": player_id,
