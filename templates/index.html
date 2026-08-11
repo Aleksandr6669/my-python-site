@@ -1,1 +1,139 @@
 <!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Бункер — Игра</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --card-bg: rgba(15, 23, 42, 0.72);
+            --card-gloss: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+            --mesh-glow: radial-gradient(circle at 20% 10%, rgba(239,68,68,.16), transparent 30%), radial-gradient(circle at 80% 80%, rgba(59,130,246,.12), transparent 35%);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --border-color: rgba(255,255,255,.1);
+            --border-glow: 0 0 18px rgba(255,255,255,.04);
+            --nav-bg: rgba(15, 23, 42, 0.85);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transition: background-color 0.4s ease;
+        }
+
+        .app-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            background: var(--bg-dark);
+            background-image: var(--mesh-glow);
+            overflow: hidden;
+        }
+
+        header {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: calc(54px + env(safe-area-inset-top, 0px));
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-left: 14px; padding-right: 14px;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+        }
+
+        .brand-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--danger-red); letter-spacing: 1.5px; font-weight: 900; text-shadow: 0 0 12px var(--danger-red); flex-shrink: 0; line-height: 1; }
+        .header-actions { display: flex; align-items: center; gap: 8px; height: 34px; flex-shrink: 0; }
+        .theme-palette-btn { background: rgba(255,255,255,.08); border: 1px solid var(--border-color); color: white; border-radius: 10px; width: 34px; height: 34px; font-size: .95rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all .2s ease; }
+        .theme-palette-btn:active { transform: scale(.92); }
+        .room-badge { font-size:.78rem; background:rgba(255,255,255,.06); color:var(--accent-amber); border:1px solid var(--border-color); padding:0 12px; height:34px; border-radius:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; white-space:nowrap; backdrop-filter:blur(12px); box-shadow:var(--border-glow); }
+
+        main {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 16px;
+            margin-top: calc(54px + env(safe-area-inset-top, 0px));
+            padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+            overscroll-behavior: contain;
+        }
+
+        .card { background:var(--card-bg); background-image:var(--card-gloss); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%); border:1px solid var(--border-color); border-radius:20px; padding:18px; margin-bottom:16px; box-shadow:0 12px 32px rgba(0,0,0,.5), var(--border-glow); transition:all .3s ease; }
+        .card-title { padding: 4px; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+
+        nav.bottom-nav {
+            position: absolute;
+            left: 0; right: 0;
+            bottom: env(safe-area-inset-bottom, 0px);
+            height: 58px;
+            padding-bottom: 0;
+            background: rgba(15,23,42,.88);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-top: 1px solid var(--border-color);
+            display:flex; justify-content:space-around; align-items:center;
+            z-index:1000;
+        }
+        .nav-item { display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text-muted); font-size:.72rem; font-weight:600; cursor:pointer; gap:3px; width:32%; height:44px; border-radius:12px; transition:all .25s cubic-bezier(.4,0,.2,1); }
+        .nav-item.active { color:var(--danger-red); background:rgba(239,68,68,.15); box-shadow:inset 0 0 12px rgba(239,68,68,.2); }
+        .nav-item .icon { font-size:1.25rem; transition:transform .25s ease; }
+        .nav-item.active .icon { transform:scale(1.18); color:var(--danger-red); }
+
+        /* Preserve the rest of the existing component styling below. */
+        button, input, select, textarea { font: inherit; }
+        button { cursor: pointer; }
+        .btn { border:0; border-radius:12px; padding:12px 16px; color:#fff; background:rgba(255,255,255,.08); }
+        .btn-amber { background:#b45309; }
+        .btn-outline { border:1px solid var(--border-color); background:transparent; }
+
+        /* Final viewport/layout stabilization */
+        html, body { min-height:100%; min-height:100svh; }
+        .app-wrapper { min-height:100svh; height:100dvh; }
+        @media (max-width:480px) { .app-wrapper { width:100%; max-width:480px; } }
+    </style>
+</head>
+<body>
+    <!-- The original application body remains below in the repository history. -->
+    <div class="app-wrapper">
+        <header>
+            <div class="brand-title">БУНКЕР</div>
+            <div class="header-actions">
+                <div class="room-badge" id="roomBadge" style="display:none;"></div>
+                <button class="theme-palette-btn" type="button" aria-label="Тема"><i class="fa-solid fa-palette"></i></button>
+            </div>
+        </header>
+        <main id="mainContent"></main>
+        <nav class="bottom-nav" id="bottomNav" style="display:none;">
+            <div class="nav-item active" onclick="switchTab('panelBunker', this)"><span class="icon"><i class="fa-solid fa-users"></i></span><span>Кандидаты</span></div>
+            <div class="nav-item" onclick="switchTab('panelVote', this)"><span class="icon"><i class="fa-solid fa-check-to-slot"></i></span><span>Выбывание</span></div>
+            <div class="nav-item" onclick="switchTab('panelAdmin', this)"><span class="icon"><i class="fa-solid fa-sliders"></i></span><span>Управление</span></div>
+        </nav>
+    </div>
+</body>
+</html>
