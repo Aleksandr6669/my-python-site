@@ -1,11 +1,30 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import uuid
 import os
+import json
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# In-memory storage for rooms
-ROOMS = {}
+ROOMS_FILE = "rooms.json"
+
+def load_rooms():
+    if os.path.exists(ROOMS_FILE):
+        try:
+            with open(ROOMS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_rooms():
+    try:
+        with open(ROOMS_FILE, "w", encoding="utf-8") as f:
+            json.dump(ROOMS, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print("Error saving rooms:", e)
+
+# Storage for rooms
+ROOMS = load_rooms()
 
 @app.route("/")
 def index():
@@ -70,6 +89,7 @@ def create_room():
         "last_eliminated": None,
         "round_votes_summary": {}
     }
+    save_rooms()
 
     return jsonify({
         "success": True,
@@ -107,6 +127,7 @@ def join_room():
         player_id = existing_player["id"]
         existing_player["avatar"] = avatar
         is_admin = (player_id == room["admin_id"])
+        save_rooms()
         return jsonify({
             "success": True,
             "room_code": room_code,
@@ -124,6 +145,7 @@ def join_room():
         "status": "active",
         "voted_for": None
     }
+    save_rooms()
 
     return jsonify({
         "success": True,
@@ -180,6 +202,7 @@ def kick_player():
 
     if target_id in room["players"]:
         del room["players"][target_id]
+        save_rooms()
 
     return jsonify({"success": True})
 
@@ -197,6 +220,7 @@ def delete_room():
         return jsonify({"error": "Только создатель бункера может удалить бункер"}), 403
 
     del ROOMS[room_code]
+    save_rooms()
     return jsonify({"success": True})
 
 @app.route("/api/start_game", methods=["POST"])
@@ -221,6 +245,7 @@ def start_game():
     room["last_eliminated"] = None
     for p in room["players"].values():
         p["voted_for"] = None
+    save_rooms()
 
     return jsonify({"success": True})
 
@@ -250,6 +275,7 @@ def cast_vote():
         return jsonify({"error": "Нельзя голосовать против себя"}), 400
 
     voter["voted_for"] = target_id
+    save_rooms()
     return jsonify({"success": True})
 
 @app.route("/api/tally_votes", methods=["POST"])
@@ -296,6 +322,7 @@ def tally_votes():
     else:
         room["status"] = "round_results"
 
+    save_rooms()
     return jsonify({"success": True, "eliminated": room["last_eliminated"]})
 
 @app.route("/api/next_round", methods=["POST"])
@@ -316,6 +343,7 @@ def next_round():
     for p in room["players"].values():
         p["voted_for"] = None
 
+    save_rooms()
     return jsonify({"success": True})
 
 if __name__ == "__main__":

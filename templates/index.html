@@ -94,13 +94,13 @@
             background: var(--bg-dark);
         }
 
-        /* Fixed Compact Top Header */
+        /* Fixed Compact Header */
         header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: calc(52px + env(safe-area-inset-top, 0px));
+            height: calc(50px + env(safe-area-inset-top, 0px));
             padding-top: env(safe-area-inset-top, 0px);
             padding-left: 12px;
             padding-right: 12px;
@@ -146,20 +146,23 @@
             white-space: nowrap;
         }
 
+        /* Compact Icon-Only Theme Selector */
         .theme-select-btn {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             border: 1px solid var(--border-color);
             color: white;
             border-radius: 8px;
-            padding: 4px 6px;
-            font-size: 0.75rem;
+            padding: 2px 4px;
+            font-size: 0.85rem;
             outline: none;
             cursor: pointer;
-            max-width: 85px;
+            width: 42px;
+            height: 30px;
+            text-align: center;
             flex-shrink: 0;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .leave-btn {
@@ -179,7 +182,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 14px;
-            margin-top: calc(52px + env(safe-area-inset-top, 0px));
+            margin-top: calc(50px + env(safe-area-inset-top, 0px));
             padding-bottom: calc(80px + env(safe-area-inset-bottom, 12px));
         }
 
@@ -197,7 +200,7 @@
             font-family: 'Orbitron', sans-serif;
             font-size: 1rem;
             color: var(--accent-amber);
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -460,11 +463,11 @@
             <div class="brand-title">БУНКЕР</div>
             <div class="header-actions">
                 <select class="theme-select-btn" onchange="changeTheme(this.value)">
-                    <option value="red">🔴 Красный</option>
-                    <option value="cyan">🔵 Циан</option>
-                    <option value="emerald">🟢 Изумруд</option>
-                    <option value="amber">🟡 Январь</option>
-                    <option value="purple">🟣 Фиолет</option>
+                    <option value="red">🔴</option>
+                    <option value="cyan">🔵</option>
+                    <option value="emerald">🟢</option>
+                    <option value="amber">🟡</option>
+                    <option value="purple">🟣</option>
                 </select>
                 <div class="room-badge" id="headerRoomBadge">Не в игре</div>
                 <button class="leave-btn" id="leaveBtn" style="display: none;" onclick="leaveRoom()">🚪 Выйти</button>
@@ -905,6 +908,7 @@
                 if (res.ok) {
                     onJoinedRoom();
                 } else {
+                    // SILENT CLEANUP on stale/deleted room (No alert popups!)
                     clearSession();
                     fetchAvailableRooms();
                 }
@@ -921,7 +925,7 @@
             const data = await res.json();
 
             if (!res.ok) {
-                alert(data.error || "Вышли из комнаты");
+                // Quietly reset if room was deleted by admin
                 leaveRoom();
                 return;
             }
