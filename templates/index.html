@@ -200,7 +200,7 @@
             overflow-y: auto;
             padding: 16px;
             margin-top: calc(54px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(75px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: calc(90px + env(safe-area-inset-bottom, 12px));
         }
 
         /* Glossy Glassmorphic Cards */
@@ -410,7 +410,7 @@
             padding: 4px;
         }
 
-        /* Tab Content Control */
+        /* Animated Tab Content Control */
         .tab-panel {
             display: none;
         }
@@ -419,22 +419,23 @@
             display: block;
         }
 
-        /* Strictly Glued Bottom Navigation Bar */
+        /* Floating Modern Glassmorphism Dock Bottom Navigation Bar */
         nav.bottom-nav {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: calc(58px + env(safe-area-inset-bottom, 0px));
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: rgba(15, 23, 42, 0.88);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-top: 1px solid var(--border-color);
+            bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            left: 14px;
+            right: 14px;
+            height: 60px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--border-color);
+            border-radius: 22px;
             display: flex;
             justify-content: space-around;
             align-items: center;
             z-index: 1000;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), var(--border-glow);
         }
 
         .nav-item {
@@ -443,30 +444,31 @@
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-weight: 600;
             cursor: pointer;
-            gap: 3px;
-            width: 32%;
-            height: 44px;
-            border-radius: 12px;
+            gap: 2px;
+            width: 30%;
+            height: 48px;
+            border-radius: 16px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .nav-item.active {
             color: var(--danger-red);
-            background: rgba(239, 68, 68, 0.15);
-            box-shadow: inset 0 0 12px rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.16);
+            box-shadow: inset 0 0 12px rgba(239, 68, 68, 0.25);
         }
 
         .nav-item .icon {
             font-size: 1.25rem;
-            transition: transform 0.25s ease;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .nav-item.active .icon {
-            transform: scale(1.18);
+            transform: translateY(-2px) scale(1.15);
             color: var(--danger-red);
+            filter: drop-shadow(0 0 8px var(--danger-red));
         }
 
         .room-item-card {
@@ -684,7 +686,7 @@
 
         </main>
 
-        <!-- STRICTLY PINNED 3-TAB ANIMATED BOTTOM NAVIGATION BAR -->
+        <!-- FLOATING GLASSMORPHISM DOCK BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon"><i class="fa-solid fa-users"></i></span>
