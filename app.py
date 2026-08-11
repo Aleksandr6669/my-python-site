@@ -2,17 +2,21 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 import uuid
 import os
 import json
+import tempfile
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-ROOMS_FILE = "rooms.json"
+# Use /tmp directory for serverless (Vercel / Lambda) writable filesystem compatibility
+TEMP_DIR = tempfile.gettempdir()
+ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v1.json")
 
 def load_rooms():
     if os.path.exists(ROOMS_FILE):
         try:
             with open(ROOMS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
+        except Exception as e:
+            print("Load rooms error:", e)
             return {}
     return {}
 
@@ -21,9 +25,9 @@ def save_rooms():
         with open(ROOMS_FILE, "w", encoding="utf-8") as f:
             json.dump(ROOMS, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print("Error saving rooms:", e)
+        print("Save rooms error:", e)
 
-# Storage for rooms
+# In-memory storage with file backup
 ROOMS = load_rooms()
 
 @app.route("/")
@@ -49,6 +53,8 @@ def service_worker():
 
 @app.route("/api/list_rooms", methods=["GET"])
 def list_rooms():
+    global ROOMS
+    ROOMS = load_rooms()
     active_rooms = []
     for code, room in ROOMS.items():
         active_rooms.append({
@@ -62,6 +68,8 @@ def list_rooms():
 
 @app.route("/api/create_room", methods=["POST"])
 def create_room():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").strip().upper()
     password = data.get("password", "").strip()
@@ -72,15 +80,12 @@ def create_room():
     if not room_code or not password:
         return jsonify({"error": "Укажите код бункера и пароль"}), 400
 
-    if room_code in ROOMS:
-        return jsonify({"error": "Бункер с таким кодом уже существует"}), 400
-
     admin_id = str(uuid.uuid4())
     ROOMS[room_code] = {
         "code": room_code,
         "password": password,
         "seats": seats,
-        "status": "lobby", # 'lobby', 'voting', 'round_results', 'finished'
+        "status": "lobby",
         "round": 1,
         "admin_id": admin_id,
         "players": {
@@ -100,6 +105,8 @@ def create_room():
 
 @app.route("/api/join_room", methods=["POST"])
 def join_room():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").strip().upper()
     password = data.get("password", "").strip()
@@ -156,11 +163,13 @@ def join_room():
 
 @app.route("/api/room_status/<room_code>", methods=["GET"])
 def room_status(room_code):
+    global ROOMS
+    ROOMS = load_rooms()
     room_code = room_code.upper()
     player_id = request.args.get("player_id")
 
     if room_code not in ROOMS:
-        return jsonify({"error": "Бункер был удален или не существует", "code": "ROOM_DELETED"}), 404
+        return jsonify({"error": "Бункер не найден", "code": "ROOM_DELETED"}), 404
 
     room = ROOMS[room_code]
 
@@ -185,6 +194,8 @@ def room_status(room_code):
 
 @app.route("/api/kick_player", methods=["POST"])
 def kick_player():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").upper()
     admin_id = data.get("admin_id")
@@ -208,6 +219,8 @@ def kick_player():
 
 @app.route("/api/delete_room", methods=["POST"])
 def delete_room():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").upper()
     admin_id = data.get("admin_id")
@@ -225,6 +238,8 @@ def delete_room():
 
 @app.route("/api/start_game", methods=["POST"])
 def start_game():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").upper()
     player_id = data.get("player_id")
@@ -251,6 +266,8 @@ def start_game():
 
 @app.route("/api/cast_vote", methods=["POST"])
 def cast_vote():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").upper()
     voter_id = data.get("voter_id")
@@ -280,6 +297,8 @@ def cast_vote():
 
 @app.route("/api/tally_votes", methods=["POST"])
 def tally_votes():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").upper()
     player_id = data.get("player_id")
@@ -327,6 +346,8 @@ def tally_votes():
 
 @app.route("/api/next_round", methods=["POST"])
 def next_round():
+    global ROOMS
+    ROOMS = load_rooms()
     data = request.json or {}
     room_code = data.get("room_code", "").upper()
     player_id = data.get("player_id")
