@@ -18,13 +18,48 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        :root {
+        /* Theme Definitions */
+        [data-theme="red"] {
             --bg-dark: #0b0f19;
             --card-bg: rgba(22, 30, 46, 0.95);
             --border-color: rgba(239, 68, 68, 0.25);
             --danger-red: #ef4444;
-            --danger-hover: #dc2626;
             --accent-amber: #f59e0b;
+        }
+
+        [data-theme="cyan"] {
+            --bg-dark: #09131d;
+            --card-bg: rgba(18, 38, 58, 0.95);
+            --border-color: rgba(6, 182, 212, 0.3);
+            --danger-red: #06b6d4;
+            --accent-amber: #38bdf8;
+        }
+
+        [data-theme="emerald"] {
+            --bg-dark: #061510;
+            --card-bg: rgba(15, 38, 28, 0.95);
+            --border-color: rgba(16, 185, 129, 0.3);
+            --danger-red: #10b981;
+            --accent-amber: #34d399;
+        }
+
+        [data-theme="amber"] {
+            --bg-dark: #181109;
+            --card-bg: rgba(42, 30, 18, 0.95);
+            --border-color: rgba(245, 158, 11, 0.3);
+            --danger-red: #f59e0b;
+            --accent-amber: #fbbf24;
+        }
+
+        [data-theme="purple"] {
+            --bg-dark: #110a1f;
+            --card-bg: rgba(33, 20, 58, 0.95);
+            --border-color: rgba(168, 85, 247, 0.3);
+            --danger-red: #a855f7;
+            --accent-amber: #c084fc;
+        }
+
+        :root {
             --success-green: #10b981;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
@@ -46,6 +81,7 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            transition: background-color 0.3s;
         }
 
         .app-wrapper {
@@ -61,7 +97,7 @@
 
         /* Top Header */
         header {
-            padding: 12px 16px;
+            padding: 10px 16px;
             background: rgba(17, 24, 39, 0.95);
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -72,7 +108,7 @@
 
         .brand-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: var(--danger-red);
             letter-spacing: 2px;
             font-weight: 800;
@@ -94,17 +130,24 @@
             font-weight: 600;
         }
 
+        .theme-select-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            outline: none;
+            cursor: pointer;
+        }
+
         .leave-btn {
             background: none;
             border: none;
             color: var(--text-muted);
             font-size: 0.8rem;
             cursor: pointer;
-            padding: 4px 6px;
-        }
-
-        .leave-btn:hover {
-            color: var(--danger-red);
+            padding: 4px;
         }
 
         /* Main Content Viewport */
@@ -122,6 +165,7 @@
             padding: 18px;
             margin-bottom: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s;
         }
 
         .card-title {
@@ -164,6 +208,34 @@
             border-color: var(--danger-red);
         }
 
+        /* Avatar Picker Grid */
+        .avatar-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .avatar-option {
+            width: 42px;
+            height: 42px;
+            background: rgba(11, 15, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .avatar-option.selected {
+            border-color: var(--danger-red);
+            background: rgba(239, 68, 68, 0.2);
+            transform: scale(1.1);
+        }
+
         /* Tactile Buttons */
         .btn {
             width: 100%;
@@ -186,13 +258,9 @@
             transform: scale(0.98);
         }
 
-        .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
         .btn-amber {
             background: var(--accent-amber);
+            color: #0b0f19;
         }
 
         .btn-outline {
@@ -234,6 +302,10 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .player-avatar {
+            font-size: 1.2rem;
         }
 
         .player-name {
@@ -361,12 +433,19 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="red">
 
     <div class="app-wrapper">
         <header>
             <div class="brand-title">БУНКЕР</div>
             <div class="header-actions">
+                <select class="theme-select-btn" onchange="changeTheme(this.value)">
+                    <option value="red">🎨 Красный</option>
+                    <option value="cyan">🎨 Циан</option>
+                    <option value="emerald">🎨 Изумруд</option>
+                    <option value="amber">🎨 Январь</option>
+                    <option value="purple">🎨 Фиолет</option>
+                </select>
                 <div class="room-badge" id="headerRoomBadge">Не в игре</div>
                 <button class="leave-btn" id="leaveBtn" style="display: none;" onclick="leaveRoom()">🚪 Выйти</button>
             </div>
@@ -379,7 +458,7 @@
                 📲 Сохранить на главный экран (PWA)
             </button>
 
-            <!-- ЭКРАН ВХОДА (Показывается, когда пользователь не в бункере) -->
+            <!-- ЭКРАН ВХОДА -->
             <div id="authScreen">
                 
                 <!-- СПИСОК АКТИВНЫХ БУНКЕРОВ -->
@@ -396,11 +475,26 @@
                         <div class="mode-btn" id="tabCreateBtn" onclick="switchAuthMode('create')">Создать Бункер</div>
                     </div>
 
+                    <!-- Выбор Аватарки -->
+                    <label>Выберите Аватарку:</label>
+                    <div class="avatar-grid" id="avatarPicker">
+                        <div class="avatar-option selected" onclick="selectAvatar(this, '🦁')">🦁</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🐺')">🐺</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🐘')">🐘</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🐆')">🐆</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🦊')">🦊</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🐼')">🐼</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🐻')">🐻</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🦉')">🦉</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🤖')">🤖</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '👽')">👽</div>
+                    </div>
+
                     <!-- ФОРМА ВХОДА -->
                     <div id="joinForm">
                         <div class="form-group">
                             <label>Код Бункера:</label>
-                            <input type="text" id="joinRoomCode" placeholder="Выберите из списка выше или введите" style="text-transform: uppercase;">
+                            <input type="text" id="joinRoomCode" placeholder="Выберите из списка или введите" style="text-transform: uppercase;">
                         </div>
                         <div class="form-group">
                             <label>Пароль:</label>
@@ -436,10 +530,10 @@
                 </div>
             </div>
 
-            <!-- ИГРОВОЙ ИНТЕРФЕЙС (Показывается только когда зашли в бункер) -->
+            <!-- ИГРОВОЙ ИНТЕРФЕЙС -->
             <div id="gameWrapper" style="display: none;">
 
-                <!-- ВКЛАДКА 1: СОСТОЯНИЕ БУНКЕРA И СПИСОК -->
+                <!-- ВКЛАДКА 1: СОСТОЯНИЕ БУНКЕРА И СПИСОК -->
                 <div id="panelBunker" class="tab-panel active">
                     <div class="card">
                         <div class="card-title">🛡️ Состояние Бункера</div>
@@ -521,7 +615,7 @@
 
         </main>
 
-        <!-- BOTTOM NAVIGATION BAR (Скрыт пока не вошли в бункер) -->
+        <!-- BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon">🏠</span>
@@ -567,7 +661,25 @@
         let currentRoom = null;
         let currentPlayerId = null;
         let isAdmin = false;
+        let selectedAvatar = '🦁';
         let pollTimer = null;
+
+        function changeTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+            localStorage.setItem('bunker_theme', themeName);
+        }
+
+        function restoreTheme() {
+            const savedTheme = localStorage.getItem('bunker_theme') || 'red';
+            document.body.setAttribute('data-theme', savedTheme);
+            document.querySelector('.theme-select-btn').value = savedTheme;
+        }
+
+        function selectAvatar(el, avatar) {
+            document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedAvatar = avatar;
+        }
 
         function saveSession(roomCode, playerId, adminFlag) {
             localStorage.setItem('bunker_session', JSON.stringify({
@@ -640,7 +752,7 @@
             const res = await fetch('/api/create_room', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({room_code: code, password, seats, admin_name: adminName})
+                body: JSON.stringify({room_code: code, password, seats, admin_name: adminName, avatar: selectedAvatar})
             });
 
             const data = await res.json();
@@ -665,7 +777,7 @@
             const res = await fetch('/api/join_room', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({room_code: code, password, player_name: playerName})
+                body: JSON.stringify({room_code: code, password, player_name: playerName, avatar: selectedAvatar})
             });
 
             const data = await res.json();
@@ -708,6 +820,7 @@
         }
 
         async function restoreSession() {
+            restoreTheme();
             const saved = localStorage.getItem('bunker_session');
             if (!saved) {
                 fetchAvailableRooms();
@@ -757,7 +870,7 @@
             };
             document.getElementById('gameStatusText').innerText = statusMap[data.status] || data.status;
 
-            // Render Player List (No 'Админ' or crowns)
+            // Render Player List
             const playerList = document.getElementById('playerList');
             playerList.innerHTML = '';
             data.players.forEach(p => {
@@ -772,6 +885,7 @@
                 playerList.innerHTML += `
                     <li class="player-item ${isEliminated ? 'eliminated' : ''}">
                         <div class="player-info">
+                            <span class="player-avatar">${p.avatar || '👤'}</span>
                             <span class="player-name">${p.name}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
@@ -804,7 +918,7 @@
                 const targetSelect = document.getElementById('voteTargetSelect');
                 targetSelect.innerHTML = '<option value="">-- Выберите игрока --</option>';
                 data.players.filter(p => p.status === 'active' && p.id !== currentPlayerId).forEach(p => {
-                    targetSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                    targetSelect.innerHTML += `<option value="${p.id}">${p.avatar || '👤'} ${p.name}</option>`;
                 });
             }
 
@@ -922,7 +1036,7 @@
             else fetchRoomStatus();
         }
 
-        // Initialize App Session
+        // Initialize App Session & Theme
         restoreSession();
     </script>
 </body>

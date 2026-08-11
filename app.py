@@ -43,6 +43,7 @@ def create_room():
     password = data.get("password", "").strip()
     seats = int(data.get("seats", 3))
     admin_name = data.get("admin_name", "Игрок 1").strip()
+    avatar = data.get("avatar", "🦁")
 
     if not room_code or not password:
         return jsonify({"error": "Укажите код бункера и пароль"}), 400
@@ -59,7 +60,7 @@ def create_room():
         "round": 1,
         "admin_id": admin_id,
         "players": {
-            admin_id: {"id": admin_id, "name": admin_name, "status": "active", "voted_for": None}
+            admin_id: {"id": admin_id, "name": admin_name, "avatar": avatar, "status": "active", "voted_for": None}
         },
         "last_eliminated": None,
         "round_votes_summary": {}
@@ -78,6 +79,7 @@ def join_room():
     room_code = data.get("room_code", "").strip().upper()
     password = data.get("password", "").strip()
     player_name = data.get("player_name", "").strip()
+    avatar = data.get("avatar", "🦊")
 
     if room_code not in ROOMS:
         return jsonify({"error": "Бункер с таким кодом не найден"}), 404
@@ -93,6 +95,7 @@ def join_room():
     room["players"][player_id] = {
         "id": player_id,
         "name": player_name,
+        "avatar": avatar,
         "status": "active",
         "voted_for": None
     }
@@ -255,10 +258,10 @@ def tally_votes():
     eliminated_player = room["players"].get(eliminated_id)
     if eliminated_player:
         eliminated_player["status"] = "eliminated"
-        room["last_eliminated"] = eliminated_player["name"]
+        room["last_eliminated"] = f"{eliminated_player.get('avatar', '👤')} {eliminated_player['name']}"
 
     # Summary
-    summary = {room["players"][pid]["name"]: count for pid, count in tally.items()}
+    summary = {f"{room['players'][pid].get('avatar', '👤')} {room['players'][pid]['name']}": count for pid, count in tally.items()}
     room["round_votes_summary"] = summary
 
     # Check if game over
