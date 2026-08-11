@@ -94,7 +94,7 @@
             background: var(--bg-dark);
         }
 
-        /* Fixed Header with Clean Theme Selector */
+        /* Fixed Compact Header with iOS Reset */
         header {
             position: fixed;
             top: 0;
@@ -112,7 +112,7 @@
             z-index: 100;
             max-width: 480px;
             margin: 0 auto;
-            overflow: hidden;
+            width: 100%;
         }
 
         .brand-title {
@@ -138,23 +138,31 @@
             color: var(--danger-red);
             border: 1px solid var(--danger-red);
             padding: 4px 8px;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: 600;
             flex-shrink: 0;
             white-space: nowrap;
         }
 
-        /* Clean Compact Theme Selector Dropdown */
+        /* Fixed 40px Icon-Only Theme Selector */
         .theme-select-btn {
-            background: rgba(255, 255, 255, 0.1);
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.12);
             border: 1px solid var(--border-color);
             color: white;
             border-radius: 8px;
-            padding: 4px 6px;
-            font-size: 0.8rem;
+            padding: 0 4px;
+            font-size: 1rem;
             outline: none;
             cursor: pointer;
+            width: 40px;
             height: 32px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
         }
 
@@ -162,7 +170,7 @@
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid var(--danger-red);
             color: white;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             border-radius: 8px;
             padding: 4px 8px;
             cursor: pointer;
@@ -455,12 +463,12 @@
         <header>
             <div class="brand-title">БУНКЕР</div>
             <div class="header-actions">
-                <select class="theme-select-btn" onchange="changeTheme(this.value)">
-                    <option value="red">🔴 Красный</option>
-                    <option value="cyan">🔵 Циан</option>
-                    <option value="emerald">🟢 Изумруд</option>
-                    <option value="amber">🟡 Январь</option>
-                    <option value="purple">🟣 Фиолет</option>
+                <select class="theme-select-btn" id="themeSelectBtn" onchange="changeTheme(this.value)">
+                    <option value="red">🔴</option>
+                    <option value="cyan">🔵</option>
+                    <option value="emerald">🟢</option>
+                    <option value="amber">🟡</option>
+                    <option value="purple">🟣</option>
                 </select>
                 <div class="room-badge" id="headerRoomBadge">Не в игре</div>
                 <button class="leave-btn" id="leaveBtn" style="display: none;" onclick="leaveRoom()">🚪 Выйти</button>
@@ -716,7 +724,7 @@
         function restoreTheme() {
             const savedTheme = localStorage.getItem('bunker_theme') || 'red';
             document.body.setAttribute('data-theme', savedTheme);
-            document.querySelector('.theme-select-btn').value = savedTheme;
+            document.getElementById('themeSelectBtn').value = savedTheme;
         }
 
         function selectAvatar(el, avatar) {
