@@ -230,7 +230,7 @@
             gap: 8px;
         }
 
-        /* Form Inputs with Autocomplete Off */
+        /* Form Inputs */
         .form-group {
             margin-bottom: 12px;
         }
@@ -813,6 +813,7 @@
         let selectedAvatar = '🦁';
         let pollTimer = null;
         let previousEliminatedStatus = false;
+        let consecutiveFailures = 0;
 
         function savePlayerNameLocally(val) {
             if (val) {
@@ -858,6 +859,7 @@
             currentPlayerId = null;
             isAdmin = false;
             previousEliminatedStatus = false;
+            consecutiveFailures = 0;
             if (pollTimer) clearInterval(pollTimer);
         }
 
@@ -952,7 +954,7 @@
             isAdmin = true;
 
             saveSession(currentRoom, currentPlayerId, isAdmin);
-            onJoinedRoom();
+            onJoinedRoom(data.room_data);
             Toast.fire({ icon: 'success', title: 'Бункер успешно создан!' });
         }
 
@@ -984,7 +986,8 @@
             Toast.fire({ icon: 'success', title: 'Успешный вход в бункер!' });
         }
 
-        function onJoinedRoom() {
+        function onJoinedRoom(initialData) {
+            consecutiveFailures = 0;
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('gameWrapper').style.display = 'block';
             document.getElementById('bottomNav').style.display = 'flex';
@@ -994,7 +997,12 @@
             document.getElementById('notAdminNotice').style.display = isAdmin ? 'none' : 'block';
             document.getElementById('adminControls').style.display = isAdmin ? 'block' : 'none';
 
-            fetchRoomStatus();
+            if (initialData) {
+                renderRoomData(initialData);
+            } else {
+                fetchRoomStatus();
+            }
+
             if (pollTimer) clearInterval(pollTimer);
             pollTimer = setInterval(fetchRoomStatus, 2000);
         }
@@ -1043,14 +1051,30 @@
         async function fetchRoomStatus() {
             if (!currentRoom) return;
 
-            const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
-            const data = await res.json();
+            try {
+                const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
+                const data = await res.json();
 
-            if (!res.ok) {
-                leaveRoom();
-                return;
+                if (!res.ok) {
+                    consecutiveFailures++;
+                    if (consecutiveFailures >= 3) {
+                        leaveRoom();
+                    }
+                    return;
+                }
+
+                consecutiveFailures = 0; // Reset on success
+                renderRoomData(data);
+
+            } catch(e) {
+                consecutiveFailures++;
+                if (consecutiveFailures >= 3) {
+                    leaveRoom();
+                }
             }
+        }
 
+        function renderRoomData(data) {
             // Update Status Texts
             document.getElementById('roundText').innerText = data.round;
             document.getElementById('seatsText').innerText = data.seats;

@@ -7,7 +7,7 @@ import tempfile
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 TEMP_DIR = tempfile.gettempdir()
-ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v2.json")
+ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v3.json")
 
 def load_rooms():
     if os.path.exists(ROOMS_FILE):
@@ -99,7 +99,19 @@ def create_room():
         "success": True,
         "room_code": room_code,
         "player_id": admin_id,
-        "is_admin": True
+        "is_admin": True,
+        "room_data": {
+            "code": room_code,
+            "seats": seats,
+            "status": "lobby",
+            "round": 1,
+            "admin_id": admin_id,
+            "players": list(ROOMS[room_code]["players"].values()),
+            "active_count": 1,
+            "voted_count": 0,
+            "last_eliminated": None,
+            "round_votes_summary": {}
+        }
     })
 
 @app.route("/api/join_room", methods=["POST"])
@@ -115,8 +127,7 @@ def join_room():
     if not room_code or not password or not player_name:
         return jsonify({"error": "Заполните все поля"}), 400
 
-    # Auto-recovery for serverless instances:
-    # If room does not exist in memory/tmp, create it on demand so user is never blocked!
+    # Auto-recovery for serverless instances
     if room_code not in ROOMS:
         admin_id = str(uuid.uuid4())
         ROOMS[room_code] = {
