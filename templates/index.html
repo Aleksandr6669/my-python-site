@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Бункер — PWA Игра на Выживание</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Бункер — Система Голосования</title>
     
     <!-- PWA Primary Meta Tags -->
     <link rel="manifest" href="/manifest.json">
@@ -12,22 +12,23 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Бункер">
     
-    <!-- Google Fonts -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --bg-dark: #0b0f19;
-            --card-bg: rgba(22, 30, 46, 0.85);
-            --border-glow: rgba(239, 68, 68, 0.3);
+            --card-bg: rgba(22, 30, 46, 0.9);
+            --border-color: rgba(239, 68, 68, 0.3);
             --danger-red: #ef4444;
             --danger-hover: #dc2626;
             --accent-amber: #f59e0b;
             --success-green: #10b981;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
+            --nav-bg: #111827;
         }
 
         * {
@@ -35,116 +36,102 @@
             padding: 0;
             box-sizing: border-box;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        body {
-            font-family: 'Roboto', sans-serif;
+        html, body {
+            height: 100%;
+            overflow: hidden;
             background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.15), transparent 70%),
-                radial-gradient(circle at 80% 100%, rgba(245, 158, 11, 0.08), transparent 50%);
             color: var(--text-main);
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .app-wrapper {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 16px;
-            overflow-x: hidden;
+            height: 100dvh;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
         }
 
+        /* Top Header */
         header {
-            text-align: center;
-            margin-bottom: 20px;
-            margin-top: 10px;
+            padding: 12px 16px;
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
         }
 
-        .title {
+        .brand-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            letter-spacing: 3px;
+            font-size: 1.3rem;
             color: var(--danger-red);
-            text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
         }
 
-        .subtitle {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-top: 4px;
+        .room-badge {
+            font-size: 0.8rem;
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-red);
+            border: 1px solid var(--danger-red);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
         }
 
-        .pwa-install-btn {
-            display: none;
-            margin: 10px auto;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: none;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-        }
-
-        .container {
-            width: 100%;
-            max-width: 550px;
+        /* Main Content Viewport */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 80px; /* Space for bottom nav */
         }
 
         .card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border-glow);
+            border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
 
         .card-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--accent-amber);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .bunker-info {
-            background: rgba(15, 23, 42, 0.8);
-            border-left: 4px solid var(--danger-red);
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .bunker-info h4 {
-            color: var(--danger-red);
-            font-size: 0.95rem;
-            margin-bottom: 4px;
-        }
-
-        .bunker-info p {
-            font-size: 0.85rem;
-            color: #d1d5db;
-            line-height: 1.4;
-        }
-
+        /* Form Inputs */
         .form-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
-        input[type="text"], input[type="number"], select {
-            flex: 1;
-            background: rgba(11, 15, 25, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 12px 16px;
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"], select {
+            width: 100%;
+            height: 48px;
+            background: rgba(11, 15, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 0 14px;
             color: white;
             font-size: 1rem;
             outline: none;
@@ -155,75 +142,81 @@
             border-color: var(--danger-red);
         }
 
+        /* Tactile Buttons */
         .btn {
+            width: 100%;
+            height: 48px;
             background: var(--danger-red);
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 12px 20px;
+            border-radius: 10px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-        }
-
-        .btn:hover {
-            background: var(--danger-hover);
+            transition: opacity 0.2s, transform 0.1s;
         }
 
         .btn:active {
             transform: scale(0.98);
         }
 
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         .btn-amber {
             background: var(--accent-amber);
         }
 
-        .btn-amber:hover {
-            background: #d97706;
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--danger-red);
+            color: var(--danger-red);
         }
 
-        .btn-full {
-            width: 100%;
+        .btn-pwa {
+            background: linear-gradient(135deg, #10b981, #059669);
+            margin-bottom: 14px;
         }
 
+        /* Player Items */
         .player-list {
             list-style: none;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .player-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(11, 15, 25, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            padding: 12px 16px;
+            padding: 12px 14px;
         }
 
         .player-item.eliminated {
-            opacity: 0.5;
-            background: rgba(239, 68, 68, 0.1);
+            opacity: 0.45;
             border-color: rgba(239, 68, 68, 0.3);
-            text-decoration: line-through;
+            background: rgba(239, 68, 68, 0.08);
         }
 
         .player-name {
             font-weight: 500;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .badge {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             padding: 4px 8px;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -231,450 +224,493 @@
         .badge-active {
             background: rgba(16, 185, 129, 0.2);
             color: var(--success-green);
-            border: 1px solid var(--success-green);
         }
 
         .badge-eliminated {
             background: rgba(239, 68, 68, 0.2);
             color: var(--danger-red);
-            border: 1px solid var(--danger-red);
         }
 
-        .remove-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.1rem;
-        }
-
-        .remove-btn:hover {
-            color: var(--danger-red);
-        }
-
-        .voting-section {
-            margin-top: 16px;
-        }
-
-        .vote-card {
-            background: rgba(15, 23, 42, 0.7);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-
-        .voter-title {
-            font-size: 0.95rem;
-            color: var(--accent-amber);
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .results-list {
-            margin-top: 12px;
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 6px;
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-        }
-
-        .winner-card {
-            text-align: center;
-            padding: 30px 20px;
-        }
-
-        .winner-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem;
-            color: var(--success-green);
-            margin-bottom: 12px;
-            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-        }
-
-        /* Screen visibility */
-        .screen {
+        /* Tab Content Control */
+        .tab-panel {
             display: none;
         }
 
-        .screen.active {
+        .tab-panel.active {
             display: block;
+        }
+
+        /* Bottom Navigation Bar */
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: var(--nav-bg);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            gap: 3px;
+            width: 25%;
+            height: 100%;
+            transition: color 0.2s;
+        }
+
+        .nav-item .icon {
+            font-size: 1.3rem;
+        }
+
+        .nav-item.active {
+            color: var(--danger-red);
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: rgba(11, 15, 25, 0.9);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 16px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--danger-red);
+            color: white;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="title">БУНКЕР</div>
-        <div class="subtitle">Симулятор Голосования на Выживание</div>
-        <button id="pwaInstallBtn" class="pwa-install-btn">📲 Установить как PWA приложение</button>
-    </header>
+    <div class="app-wrapper">
+        <header>
+            <div class="brand-title">БУНКЕР</div>
+            <div class="room-badge" id="headerRoomBadge">Не в игре</div>
+        </header>
 
-    <div class="container">
+        <main>
 
-        <!-- СЦЕНАРИЙ И БУНКЕР -->
-        <div class="bunker-info" id="bunkerInfo">
-            <h4 id="catastropheTitle">🚨 Катастрофа: Загрузка...</h4>
-            <p id="catastropheDesc">Случайные параметры бункера...</p>
-        </div>
+            <!-- PWA INSTALL PROMPT -->
+            <button id="pwaBtn" class="btn btn-pwa" style="display: none;" onclick="installPWA()">
+                📲 Сохранить на главный экран (PWA)
+            </button>
 
-        <!-- ЭКРАН 1: РЕГИСТРАЦИЯ И ЛОББИ -->
-        <div id="setupScreen" class="screen active">
-            <div class="card">
-                <div class="card-title">📝 Регистрация Игроков</div>
-                <div class="form-group">
-                    <input type="text" id="playerNameInput" placeholder="Имя игрока..." autocomplete="off">
-                    <button class="btn" onclick="addPlayer()">Добавить</button>
+            <!-- ВХОД / СОЗДАНИЕ (Если не в комнате) -->
+            <div id="authContainer" class="card">
+                <div class="mode-toggle">
+                    <div class="mode-btn active" id="tabJoinBtn" onclick="switchAuthMode('join')">Войти в Бункер</div>
+                    <div class="mode-btn" id="tabCreateBtn" onclick="switchAuthMode('create')">Создать Бункер</div>
                 </div>
 
-                <div class="form-group" style="margin-top: 10px;">
-                    <label style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; width: 100%;">
-                        Мест в бункере (Победителей):
-                        <input type="number" id="bunkerSeatsInput" value="3" min="1" max="10" style="width: 80px; padding: 6px 10px;">
-                    </label>
+                <!-- ФОРМА ВХОДА -->
+                <div id="joinForm">
+                    <div class="form-group">
+                        <label>Код Бункера:</label>
+                        <input type="text" id="joinRoomCode" placeholder="Например: B1" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль:</label>
+                        <input type="password" id="joinPassword" placeholder="Пароль от бункера">
+                    </div>
+                    <div class="form-group">
+                        <label>Ваше Имя:</label>
+                        <input type="text" id="joinPlayerName" placeholder="Ваш никнейм">
+                    </div>
+                    <button class="btn" onclick="joinRoom()">🚪 Войти в Игру</button>
                 </div>
 
-                <ul class="player-list" id="lobbyPlayerList"></ul>
-
-                <button class="btn btn-full btn-amber" style="margin-top: 20px;" onclick="startGame()">🚀 Начать Игру</button>
+                <!-- ФОРМА СОЗДАНИЯ (Админ) -->
+                <div id="createForm" style="display: none;">
+                    <div class="form-group">
+                        <label>Код Нового Бункера:</label>
+                        <input type="text" id="createRoomCode" placeholder="Например: VIP" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль для входа:</label>
+                        <input type="password" id="createPassword" placeholder="Придумайте пароль">
+                    </div>
+                    <div class="form-group">
+                        <label>Имя Создателя (Админ):</label>
+                        <input type="text" id="createAdminName" placeholder="Имя организатора">
+                    </div>
+                    <div class="form-group">
+                        <label>Мест в бункере (Победителей):</label>
+                        <input type="number" id="createSeats" value="3" min="1" max="15">
+                    </div>
+                    <button class="btn btn-amber" onclick="createRoom()">👑 Создать Бункер</button>
+                </div>
             </div>
-        </div>
 
-        <!-- ЭКРАН 2: ИГРОВОЙ РАУНД И ГОЛОСОВАНИЕ -->
-        <div id="gameScreen" class="screen">
-            <div class="card">
-                <div class="card-title" id="roundTitle">️ Голосование: Раунд 1</div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-                    Каждый живой игрок должен проголосовать против того, кого НЕ пускают в бункер. Выбывшие игроки голосовать не могут!
-                </p>
-
-                <div class="vote-card">
-                    <div class="voter-title">Кто голосует:</div>
-                    <select id="voterSelect" onchange="updateTargetSelect()">
-                        <option value="">-- Выберите голосующего --</option>
-                    </select>
-
-                    <div class="voter-title" style="margin-top: 12px;">Против кого голос:</div>
-                    <select id="targetSelect">
-                        <option value="">-- Выберите кандидата на вылет --</option>
-                    </select>
-
-                    <button class="btn btn-full" style="margin-top: 14px;" onclick="castVote()">📥 Сдать Голос</button>
+            <!-- ВКЛАДКА 1: СОСТОЯНИЕ БУНКЕРА И СПИСОК -->
+            <div id="panelBunker" class="tab-panel active">
+                <div class="card">
+                    <div class="card-title">🛡️ Состояние Бункера</div>
+                    <div style="font-size: 0.9rem; margin-bottom: 12px;">
+                        Статус: <strong id="gameStatusText" style="color: var(--accent-amber);">Ожидание игроков</strong>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Раунд: <strong id="roundText" style="color: white;">1</strong> | 
+                        Свободных мест: <strong id="seatsText" style="color: white;">3</strong>
+                    </div>
                 </div>
 
-                <div class="card-title" style="font-size: 1rem; margin-top: 20px;">Статус Голосования в Раунде</div>
-                <div id="votedStatusList" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;"></div>
-
-                <button class="btn btn-full btn-amber" id="finishRoundBtn" onclick="tallyVotes()" disabled>📊 Подвести Итоги Раунда</button>
+                <div class="card">
+                    <div class="card-title">👥 Участники в Бункере</div>
+                    <ul class="player-list" id="playerList"></ul>
+                </div>
             </div>
 
-            <div class="card">
-                <div class="card-title">👥 Игроки и Статусы</div>
-                <ul class="player-list" id="activePlayerList"></ul>
+            <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ -->
+            <div id="panelVote" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">🗳️ Голосование</div>
+                    
+                    <div id="votingFormContainer">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+                            Выберите участника, которого нужно <strong>НЕ пускать</strong> в бункер:
+                        </div>
+                        <div class="form-group">
+                            <label>Кандидат на выбывание:</label>
+                            <select id="voteTargetSelect">
+                                <option value="">-- Выберите игрока --</option>
+                            </select>
+                        </div>
+                        <button class="btn" id="castVoteBtn" onclick="submitVote()">🎯 Отдать Голос</button>
+                    </div>
+
+                    <div id="votedSuccessMessage" style="display: none; text-align: center; padding: 20px; color: var(--success-green); font-weight: 600;">
+                        ✅ Ваш голос принят и учтен! Ожидайте подведения итогов раунда.
+                    </div>
+
+                    <div id="eliminatedVoteWarning" style="display: none; text-align: center; padding: 20px; color: var(--danger-red); font-weight: 600;">
+                        🚫 Вы выбыли из бункера и больше не можете голосовать!
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- ЭКРАН 3: ИТОГИ РАУНДА -->
-        <div id="resultScreen" class="screen">
-            <div class="card">
-                <div class="card-title">⚠️ Итоги Голосования</div>
-                <div id="roundEliminatedInfo" style="font-size: 1.1rem; text-align: center; margin: 15px 0; color: var(--danger-red); font-weight: bold;"></div>
-                
-                <div class="voter-title">Распределение голосов:</div>
-                <div class="results-list" id="voteResultsList"></div>
+            <!-- ВКЛАДКА 3: РЕЗУЛЬТАТЫ -->
+            <div id="panelResults" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">📊 Результаты Раунда</div>
+                    
+                    <div id="eliminatedResultText" style="text-align: center; font-size: 1.1rem; color: var(--danger-red); margin: 12px 0; font-weight: 700;">
+                        Ожидание завершения голосования...
+                    </div>
 
-                <button class="btn btn-full btn-amber" style="margin-top: 20px;" onclick="nextRound()">▶️ Следующий Раунд</button>
+                    <div class="form-group" id="votesSummaryContainer"></div>
+                </div>
             </div>
-        </div>
 
-        <!-- ЭКРАН 4: ПОБЕДИТЕЛИ / КОНЕЦ ИГРЫ -->
-        <div id="gameOverScreen" class="screen">
-            <div class="card winner-card">
-                <div class="winner-title">🎉 БУНКЕР ЗАПОЛНЕН!</div>
-                <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 20px;">
-                    Голосование завершено. Следующие спасатели выжили и заняли места в бункере:
-                </p>
+            <!-- ВКЛАДКА 4: АДМИН ПАНЕЛЬ -->
+            <div id="panelAdmin" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">⚙️ Панель Организатора</div>
+                    
+                    <div id="adminControls">
+                        <button class="btn btn-amber" style="margin-bottom: 10px;" onclick="adminStartGame()">🚀 Запустить Голосование (Раунд 1)</button>
+                        <button class="btn" style="margin-bottom: 10px;" onclick="adminTallyVotes()">📊 Подвести Итоги Раунда</button>
+                        <button class="btn btn-outline" onclick="adminNextRound()">▶️ Начать Следующий Раунд</button>
+                    </div>
 
-                <ul class="player-list" id="winnersList" style="margin-bottom: 24px;"></ul>
-
-                <button class="btn btn-full" onclick="resetGame()">🔄 Сыграть Снова</button>
+                    <div id="notAdminNotice" style="display: none; color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">
+                        Вы вошли как обычный участник. Управление игрой доступно только создателю бункера.
+                    </div>
+                </div>
             </div>
-        </div>
 
+        </main>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('panelBunker', this)">
+                <span class="icon">🏠</span>
+                <span>Бункер</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('panelVote', this)">
+                <span class="icon">🗳️</span>
+                <span>Голосовать</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('panelResults', this)">
+                <span class="icon">📊</span>
+                <span>Итоги</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('panelAdmin', this)">
+                <span class="icon">⚙️</span>
+                <span>Админ</span>
+            </div>
+        </nav>
     </div>
 
     <script>
-        // PWA Registration & Install Banner
+        // PWA Install
         let deferredPrompt;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(() => console.log('Service Worker Registered'))
-                .catch((err) => console.log('SW registration failed: ', err));
+            navigator.serviceWorker.register('/sw.js');
         }
-
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('pwaInstallBtn').style.display = 'block';
+            document.getElementById('pwaBtn').style.display = 'block';
         });
-
-        document.getElementById('pwaInstallBtn').addEventListener('click', () => {
+        function installPWA() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then(() => {
                     deferredPrompt = null;
-                    document.getElementById('pwaInstallBtn').style.display = 'none';
+                    document.getElementById('pwaBtn').style.display = 'none';
                 });
             }
-        });
-
-        // Game State Variables
-        let players = []; // { id, name, status: 'active'|'eliminated' }
-        let bunkerSeats = 3;
-        let currentRound = 1;
-        let votes = {}; // voterId -> targetId
-        let currentCatastrophe = {};
-
-        const CATASTROPHES = [
-            { title: "🚨 Ядерная Зима", desc: "Радиационный фон зашкаливает. Температура упала до -50°C. В бункере есть еда на 5 лет." },
-            { title: "☄️ Падение Астероида", desc: "Атмосфера заполнена пеплом. Солнца нет. Бункер оснащен гидропоникой и фильтрами воздуха." },
-            { title: "☣️ Глобальная Пандемия", desc: "Неизвестный вирус уничтожил 99% населения. Бункер герметичен и оснащен медлабораторией." },
-            { title: "🌋 Техногенный Коллапс", desc: "ИИ отключил энергосети планеты. В бункере установлен автономный термоядерный реактор." }
-        ];
-
-        function generateCatastrophe() {
-            currentCatastrophe = CATASTROPHES[Math.floor(Math.random() * CATASTROPHES.length)];
-            document.getElementById('catastropheTitle').innerText = currentCatastrophe.title;
-            document.getElementById('catastropheDesc').innerText = currentCatastrophe.desc;
         }
 
-        function addPlayer() {
-            const input = document.getElementById('playerNameInput');
-            const name = input.value.trim();
-            if (!name) return;
+        // State
+        let currentRoom = null;
+        let currentPlayerId = null;
+        let isAdmin = false;
+        let pollTimer = null;
 
-            players.push({
-                id: Date.now() + Math.random(),
-                name: name,
-                status: 'active'
-            });
-
-            input.value = '';
-            renderLobby();
+        function switchAuthMode(mode) {
+            document.getElementById('tabJoinBtn').classList.toggle('active', mode === 'join');
+            document.getElementById('tabCreateBtn').classList.toggle('active', mode === 'create');
+            document.getElementById('joinForm').style.display = mode === 'join' ? 'block' : 'none';
+            document.getElementById('createForm').style.display = mode === 'create' ? 'block' : 'none';
         }
 
-        function removePlayer(id) {
-            players = players.filter(p => p.id !== id);
-            renderLobby();
-        }
-
-        function renderLobby() {
-            const list = document.getElementById('lobbyPlayerList');
-            list.innerHTML = '';
-            players.forEach(p => {
-                list.innerHTML += `
-                    <li class="player-item">
-                        <span class="player-name">${p.name}</span>
-                        <button class="remove-btn" onclick="removePlayer(${p.id})">✖</button>
-                    </li>
-                `;
-            });
-        }
-
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        }
-
-        function startGame() {
-            bunkerSeats = parseInt(document.getElementById('bunkerSeatsInput').value) || 3;
-            const activeCount = players.filter(p => p.status === 'active').length;
-
-            if (activeCount <= bunkerSeats) {
-                alert(`Для начала игры количество игроков (${activeCount}) должно быть больше мест в бункере (${bunkerSeats})!`);
-                return;
-            }
-
-            currentRound = 1;
-            startRound();
-        }
-
-        function startRound() {
-            votes = {};
-            document.getElementById('roundTitle').innerText = `️ Голосование: Раунд ${currentRound}`;
-            renderGameScreen();
-            showScreen('gameScreen');
-        }
-
-        function renderGameScreen() {
-            const activePlayers = players.filter(p => p.status === 'active');
+        function switchTab(panelId, navEl) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => p = n.classList.remove('active'));
             
-            // Populate Voter Select (Only active players who haven't voted yet)
-            const voterSelect = document.getElementById('voterSelect');
-            voterSelect.innerHTML = '<option value="">-- Выберите голосующего --</option>';
-            activePlayers.forEach(p => {
-                if (!votes[p.id]) {
-                    voterSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-                }
-            });
-
-            updateTargetSelect();
-            renderActivePlayersList();
-            renderVotedStatus();
-
-            // Enable finish round button if all active players voted
-            const votedCount = Object.keys(votes).length;
-            document.getElementById('finishRoundBtn').disabled = (votedCount < activePlayers.length);
+            document.getElementById(panelId).classList.add('active');
+            if (navEl) navEl.classList.add('active');
         }
 
-        function updateTargetSelect() {
-            const voterId = document.getElementById('voterSelect').value;
-            const targetSelect = document.getElementById('targetSelect');
-            targetSelect.innerHTML = '<option value="">-- Выберите кандидата на вылет --</option>';
+        async function createRoom() {
+            const code = document.getElementById('createRoomCode').value.trim();
+            const password = document.getElementById('createPassword').value.trim();
+            const adminName = document.getElementById('createAdminName').value.trim();
+            const seats = document.getElementById('createSeats').value;
 
-            const activePlayers = players.filter(p => p.status === 'active');
-            activePlayers.forEach(p => {
-                // Player cannot vote for themselves
-                if (p.id.toString() !== voterId) {
-                    targetSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-                }
+            const res = await fetch('/api/create_room', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_code: code, password, seats, admin_name: adminName})
             });
-        }
 
-        function castVote() {
-            const voterId = document.getElementById('voterSelect').value;
-            const targetId = document.getElementById('targetSelect').value;
-
-            if (!voterId || !targetId) {
-                alert("Выберите голосующего и того, против кого вы отдаете голос!");
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
                 return;
             }
 
-            votes[voterId] = targetId;
-            renderGameScreen();
+            currentRoom = data.room_code;
+            currentPlayerId = data.player_id;
+            isAdmin = true;
+
+            onJoinedRoom();
         }
 
-        function renderVotedStatus() {
-            const activePlayers = players.filter(p => p.status === 'active');
-            const votedCount = Object.keys(votes).length;
-            document.getElementById('votedStatusList').innerHTML = `
-                Проголосовало: <strong>${votedCount} из ${activePlayers.length}</strong> живых игроков.
-            `;
+        async function joinRoom() {
+            const code = document.getElementById('joinRoomCode').value.trim();
+            const password = document.getElementById('joinPassword').value.trim();
+            const playerName = document.getElementById('joinPlayerName').value.trim();
+
+            const res = await fetch('/api/join_room', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_code: code, password, player_name: playerName})
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            currentRoom = data.room_code;
+            currentPlayerId = data.player_id;
+            isAdmin = false;
+
+            onJoinedRoom();
         }
 
-        function renderActivePlayersList() {
-            const list = document.getElementById('activePlayerList');
-            list.innerHTML = '';
-            players.forEach(p => {
+        function onJoinedRoom() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('headerRoomBadge').innerText = `Код: ${currentRoom}`;
+            document.getElementById('notAdminNotice').style.display = isAdmin ? 'none' : 'block';
+            document.getElementById('adminControls').style.display = isAdmin ? 'block' : 'none';
+
+            fetchRoomStatus();
+            pollTimer = setInterval(fetchRoomStatus, 2000);
+        }
+
+        async function fetchRoomStatus() {
+            if (!currentRoom) return;
+
+            const res = await fetch(`/api/room_status/${currentRoom}`);
+            const data = await res.json();
+            if (data.error) return;
+
+            // Update Status Texts
+            document.getElementById('roundText').innerText = data.round;
+            document.getElementById('seatsText').innerText = data.seats;
+            
+            let statusMap = {
+                'lobby': 'Ожидание игроков (Лобби)',
+                'voting': 'Идет голосование!',
+                'round_results': 'Итоги раунда',
+                'finished': 'Игра завершена! (Бункер укомплектован)'
+            };
+            document.getElementById('gameStatusText').innerText = statusMap[data.status] || data.status;
+
+            // Render Player List
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            data.players.forEach(p => {
                 const isEliminated = p.status === 'eliminated';
-                list.innerHTML += `
+                playerList.innerHTML += `
                     <li class="player-item ${isEliminated ? 'eliminated' : ''}">
-                        <span class="player-name">${p.name}</span>
+                        <span class="player-name">${p.name} ${p.id === data.admin_id ? '👑' : ''}</span>
                         <span class="badge ${isEliminated ? 'badge-eliminated' : 'badge-active'}">
-                            ${isEliminated ? 'Выбыл из бункера' : 'В игре'}
+                            ${isEliminated ? 'Выбыл' : 'В игре'}
                         </span>
                     </li>
                 `;
             });
-        }
 
-        function tallyVotes() {
-            const tally = {};
-            players.filter(p => p.status === 'active').forEach(p => tally[p.id] = 0);
+            // Update Voting Select
+            const me = data.players.find(p => p.id === currentPlayerId);
+            const isMeEliminated = me && me.status === 'eliminated';
 
-            Object.values(votes).forEach(targetId => {
-                if (tally[targetId] !== undefined) {
-                    tally[targetId]++;
-                }
-            });
-
-            // Find player(s) with max votes
-            let maxVotes = -1;
-            let eliminatedId = null;
-
-            Object.keys(tally).forEach(id => {
-                if (tally[id] > maxVotes) {
-                    maxVotes = tally[id];
-                    eliminatedId = id;
-                }
-            });
-
-            // Mark eliminated
-            const eliminatedPlayer = players.find(p => p.id.toString() === eliminatedId.toString());
-            if (eliminatedPlayer) {
-                eliminatedPlayer.status = 'eliminated';
-            }
-
-            // Display Results
-            document.getElementById('roundEliminatedInfo').innerText = 
-                `🚫 По итогам голосования из бункера выбывает: ${eliminatedPlayer ? eliminatedPlayer.name : 'Никто'}`;
-
-            const resultsList = document.getElementById('voteResultsList');
-            resultsList.innerHTML = '';
-            Object.keys(tally).forEach(id => {
-                const p = players.find(pl => pl.id.toString() === id.toString());
-                resultsList.innerHTML += `
-                    <div class="result-item">
-                        <span>${p.name}</span>
-                        <span><strong>${tally[id]}</strong> голосов</span>
-                    </div>
-                `;
-            });
-
-            showScreen('resultScreen');
-        }
-
-        function nextRound() {
-            const activePlayers = players.filter(p => p.status === 'active');
-            
-            if (activePlayers.length <= bunkerSeats) {
-                showGameOver();
+            if (isMeEliminated) {
+                document.getElementById('votingFormContainer').style.display = 'none';
+                document.getElementById('votedSuccessMessage').style.display = 'none';
+                document.getElementById('eliminatedVoteWarning').style.display = 'block';
+            } else if (me && me.voted_for) {
+                document.getElementById('votingFormContainer').style.display = 'none';
+                document.getElementById('votedSuccessMessage').style.display = 'block';
+                document.getElementById('eliminatedVoteWarning').style.display = 'none';
             } else {
-                currentRound++;
-                startRound();
+                document.getElementById('votingFormContainer').style.display = 'block';
+                document.getElementById('votedSuccessMessage').style.display = 'none';
+                document.getElementById('eliminatedVoteWarning').style.display = 'none';
+
+                const targetSelect = document.getElementById('voteTargetSelect');
+                targetSelect.innerHTML = '<option value="">-- Выберите игрока --</option>';
+                data.players.filter(p => p.status === 'active' && p.id !== currentPlayerId).forEach(p => {
+                    targetSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                });
+            }
+
+            // Results Screen
+            if (data.last_eliminated) {
+                document.getElementById('eliminatedResultText').innerText = `🚫 Из бункера выбыл(а): ${data.last_eliminated}`;
+            } else {
+                document.getElementById('eliminatedResultText').innerText = `Голосование в процессе (${data.voted_count} из ${data.active_count} проголосовали)`;
+            }
+
+            const summaryContainer = document.getElementById('votesSummaryContainer');
+            summaryContainer.innerHTML = '';
+            if (data.round_votes_summary) {
+                Object.entries(data.round_votes_summary).forEach(([name, count]) => {
+                    summaryContainer.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 6px; font-size: 0.9rem;">
+                            <span>${name}</span>
+                            <span><strong>${count}</strong> голосов</span>
+                        </div>
+                    `;
+                });
             }
         }
 
-        function showGameOver() {
-            const winnersList = document.getElementById('winnersList');
-            winnersList.innerHTML = '';
-            
-            const activePlayers = players.filter(p => p.status === 'active');
-            activePlayers.forEach(p => {
-                winnersList.innerHTML += `
-                    <li class="player-item" style="border-color: var(--success-green); background: rgba(16, 185, 129, 0.1);">
-                        <span class="player-name" style="color: var(--success-green); font-weight: bold;">🛡️ ${p.name}</span>
-                        <span class="badge badge-active">Спасен в бункере</span>
-                    </li>
-                `;
+        async function submitVote() {
+            const targetId = document.getElementById('voteTargetSelect').value;
+            if (!targetId) {
+                alert("Выберите против кого проголосовать!");
+                return;
+            }
+
+            const res = await fetch('/api/cast_vote', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    room_code: currentRoom,
+                    voter_id: currentPlayerId,
+                    target_id: targetId
+                })
             });
 
-            showScreen('gameOverScreen');
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            fetchRoomStatus();
         }
 
-        function resetGame() {
-            players = [];
-            renderLobby();
-            generateCatastrophe();
-            showScreen('setupScreen');
+        async function adminStartGame() {
+            const res = await fetch('/api/start_game', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_code: currentRoom, player_id: currentPlayerId})
+            });
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            else fetchRoomStatus();
         }
 
-        // Initialize
-        generateCatastrophe();
-        // Default sample players for quick start
-        players = [
-            { id: 1, name: "Алексей (Инженер)", status: "active" },
-            { id: 2, name: "Мария (Врач)", status: "active" },
-            { id: 3, name: "Дмитрий (Военный)", status: "active" },
-            { id: 4, name: "Елена (Ученый)", status: "active" },
-            { id: 5, name: "Игорь (Повар)", status: "active" }
-        ];
-        renderLobby();
+        async function adminTallyVotes() {
+            const res = await fetch('/api/tally_votes', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_code: currentRoom, player_id: currentPlayerId})
+            });
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            else {
+                fetchRoomStatus();
+                switchTab('panelResults');
+            }
+        }
+
+        async function adminNextRound() {
+            const res = await fetch('/api/next_round', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_code: currentRoom, player_id: currentPlayerId})
+            });
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            else {
+                fetchRoomStatus();
+                switchTab('panelVote');
+            }
+        }
     </script>
 </body>
 </html>

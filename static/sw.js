@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bunker-game-v1';
+const CACHE_NAME = 'bunker-voting-v2';
 const ASSETS = [
   '/',
   '/manifest.json'
