@@ -431,10 +431,10 @@
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            font-size: 0.68rem;
+            font-size: 0.7rem;
             font-weight: 500;
             cursor: pointer;
-            gap: 2px;
+            gap: 3px;
             width: 24%;
             height: 42px;
             border-radius: 12px;
@@ -862,13 +862,18 @@
                 }
 
                 data.rooms.forEach(r => {
+                    let displayCode = r.code;
+                    try {
+                        displayCode = decodeURIComponent(r.code);
+                    } catch(e){}
+
                     container.innerHTML += `
                         <div class="room-item-card" onclick="openJoinStep('${r.code}')">
-                            <div>
-                                <strong style="color: var(--danger-red); font-size: 1rem;">Код: ${r.code}</strong>
+                            <div style="min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;">
+                                <strong style="color: var(--danger-red); font-size: 1rem; word-break: break-all;">Код: ${displayCode}</strong>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Участников: ${r.active_count} | Мест: ${r.seats}</div>
                             </div>
-                            <span class="badge badge-active">Войти ➔</span>
+                            <span class="badge badge-active" style="flex-shrink: 0; white-space: nowrap;">Войти ➔</span>
                         </div>
                     `;
                 });
@@ -878,13 +883,18 @@
         }
 
         function openJoinStep(code) {
+            let displayCode = code;
+            try {
+                displayCode = decodeURIComponent(code);
+            } catch(e){}
+
             document.getElementById('authRoomListStep').style.display = 'none';
             document.getElementById('authFormStep').style.display = 'block';
-            document.getElementById('authStepTitle').innerText = `🚪 Вход в Бункер (${code})`;
+            document.getElementById('authStepTitle').innerText = `🚪 Вход в Бункер (${displayCode})`;
             document.getElementById('joinFields').style.display = 'block';
             document.getElementById('createFields').style.display = 'none';
 
-            document.getElementById('joinRoomCode').value = code;
+            document.getElementById('joinRoomCode').value = displayCode;
             document.getElementById('joinPassword').value = '';
             restoreSavedPlayerName();
             document.getElementById('joinPassword').focus();
@@ -970,7 +980,12 @@
             document.getElementById('bottomNav').style.display = 'flex';
             document.getElementById('leaveBtn').style.display = 'flex';
 
-            document.getElementById('headerRoomBadge').innerText = `Код: ${currentRoom}`;
+            let displayCode = currentRoom;
+            try {
+                displayCode = decodeURIComponent(currentRoom);
+            } catch(e){}
+
+            document.getElementById('headerRoomBadge').innerText = `Код: ${displayCode}`;
             document.getElementById('notAdminNotice').style.display = isAdmin ? 'none' : 'block';
             document.getElementById('adminControls').style.display = isAdmin ? 'block' : 'none';
 

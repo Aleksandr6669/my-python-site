@@ -3,6 +3,7 @@ import uuid
 import os
 import json
 import tempfile
+from urllib.parse import unquote
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
@@ -56,8 +57,9 @@ def list_rooms():
     ROOMS = load_rooms()
     active_rooms = []
     for code, room in ROOMS.items():
+        clean_code = unquote(code)
         active_rooms.append({
-            "code": code,
+            "code": clean_code,
             "seats": room["seats"],
             "status": room["status"],
             "players_count": len(room["players"]),
@@ -70,7 +72,8 @@ def create_room():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").strip().upper()
+    raw_code = data.get("room_code", "").strip()
+    room_code = unquote(raw_code).upper()
     password = data.get("password", "").strip()
     seats = int(data.get("seats", 3))
     admin_name = data.get("admin_name", "Игрок 1").strip()
@@ -119,7 +122,8 @@ def join_room():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").strip().upper()
+    raw_code = data.get("room_code", "").strip()
+    room_code = unquote(raw_code).upper()
     password = data.get("password", "").strip()
     player_name = data.get("player_name", "").strip()
     avatar = data.get("avatar", "🦊")
@@ -197,7 +201,7 @@ def join_room():
 def room_status(room_code):
     global ROOMS
     ROOMS = load_rooms()
-    room_code = room_code.upper()
+    room_code = unquote(room_code).upper()
     player_id = request.args.get("player_id")
 
     # Auto-recreate room on serverless cold starts if missing so status NEVER returns 404
@@ -252,7 +256,7 @@ def kick_player():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").upper()
+    room_code = unquote(data.get("room_code", "")).upper()
     admin_id = data.get("admin_id")
     target_id = data.get("target_id")
 
@@ -277,7 +281,7 @@ def delete_room():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").upper()
+    room_code = unquote(data.get("room_code", "")).upper()
     admin_id = data.get("admin_id")
 
     if room_code not in ROOMS:
@@ -296,7 +300,7 @@ def start_game():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").upper()
+    room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
 
     if room_code not in ROOMS:
@@ -324,7 +328,7 @@ def cast_vote():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").upper()
+    room_code = unquote(data.get("room_code", "")).upper()
     voter_id = data.get("voter_id")
     target_id = data.get("target_id")
 
@@ -355,7 +359,7 @@ def tally_votes():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").upper()
+    room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
 
     if room_code not in ROOMS:
@@ -404,7 +408,7 @@ def next_round():
     global ROOMS
     ROOMS = load_rooms()
     data = request.json or {}
-    room_code = data.get("room_code", "").upper()
+    room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
 
     if room_code not in ROOMS:
