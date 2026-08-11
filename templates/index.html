@@ -92,53 +92,68 @@
             margin: 0 auto;
             position: relative;
             background: var(--bg-dark);
-            padding-top: env(safe-area-inset-top, 8px);
         }
 
-        /* Top Header */
+        /* Fixed Top Header */
         header {
-            padding: 10px 16px;
-            background: rgba(17, 24, 39, 0.95);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: calc(54px + env(safe-area-inset-top, 0px));
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-left: 16px;
+            padding-right: 16px;
+            background: rgba(17, 24, 39, 0.98);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 10;
+            z-index: 100;
+            max-width: 480px;
+            margin: 0 auto;
         }
 
         .brand-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             color: var(--danger-red);
             letter-spacing: 2px;
             font-weight: 800;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .header-actions {
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .room-badge {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             background: rgba(239, 68, 68, 0.15);
             color: var(--danger-red);
             border: 1px solid var(--danger-red);
             padding: 4px 8px;
             border-radius: 12px;
             font-weight: 600;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .theme-select-btn {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             border: 1px solid var(--border-color);
             color: white;
             border-radius: 8px;
-            padding: 4px 8px;
+            padding: 6px 8px;
             font-size: 0.75rem;
             outline: none;
             cursor: pointer;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .leave-btn {
@@ -148,13 +163,15 @@
             font-size: 0.8rem;
             cursor: pointer;
             padding: 4px;
+            flex-shrink: 0;
         }
 
-        /* Main Content Viewport */
+        /* Main Content Scrollable Area */
         main {
             flex: 1;
             overflow-y: auto;
             padding: 16px;
+            margin-top: calc(54px + env(safe-area-inset-top, 0px));
             padding-bottom: calc(80px + env(safe-area-inset-bottom, 12px));
         }
 
@@ -252,6 +269,8 @@
             justify-content: center;
             gap: 8px;
             transition: opacity 0.2s, transform 0.1s;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .btn:active {
@@ -349,7 +368,7 @@
             display: block;
         }
 
-        /* Bottom Navigation Bar */
+        /* Fixed Bottom Navigation Bar */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
@@ -390,67 +409,61 @@
             color: var(--danger-red);
         }
 
-        .mode-toggle {
-            display: flex;
-            background: rgba(11, 15, 25, 0.9);
-            border-radius: 10px;
-            padding: 4px;
-            margin-bottom: 16px;
-        }
-
-        .mode-btn {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-
-        .mode-btn.active {
-            background: var(--danger-red);
-            color: white;
-        }
-
-        .room-item-btn {
-            background: rgba(11, 15, 25, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 6px;
+        .room-item-card {
+            background: rgba(11, 15, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            font-size: 0.85rem;
+            transition: all 0.2s;
         }
 
-        .room-item-btn:hover {
+        .room-item-card:hover {
             border-color: var(--danger-red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .back-btn:hover {
+            color: white;
         }
     </style>
 </head>
 <body data-theme="red">
 
     <div class="app-wrapper">
+        <!-- FIXED TOP HEADER -->
         <header>
             <div class="brand-title">БУНКЕР</div>
             <div class="header-actions">
                 <select class="theme-select-btn" onchange="changeTheme(this.value)">
-                    <option value="red">🎨 Красный</option>
-                    <option value="cyan">🎨 Циан</option>
-                    <option value="emerald">🎨 Изумруд</option>
-                    <option value="amber">🎨 Январь</option>
-                    <option value="purple">🎨 Фиолет</option>
+                    <option value="red">🔴 Красный</option>
+                    <option value="cyan">🔵 Циан</option>
+                    <option value="emerald">🟢 Изумруд</option>
+                    <option value="amber">🟡 Январь</option>
+                    <option value="purple">🟣 Фиолет</option>
                 </select>
                 <div class="room-badge" id="headerRoomBadge">Не в игре</div>
                 <button class="leave-btn" id="leaveBtn" style="display: none;" onclick="leaveRoom()">🚪 Выйти</button>
             </div>
         </header>
 
+        <!-- MAIN SCROLLABLE CONTENT -->
         <main>
 
             <!-- PWA INSTALL PROMPT -->
@@ -458,25 +471,29 @@
                 📲 Сохранить на главный экран (PWA)
             </button>
 
-            <!-- ЭКРАН ВХОДА -->
+            <!-- ЭКРАН ВХОДА И ВЫБОРА БУНКЕРА -->
             <div id="authScreen">
                 
-                <!-- СПИСОК АКТИВНЫХ БУНКЕРОВ -->
-                <div class="card">
-                    <div class="card-title">🔍 Активные Бункеры</div>
-                    <div id="availableRoomsList">
-                        <div style="font-size: 0.85rem; color: var(--text-muted);">Загрузка доступных комнат...</div>
+                <!-- ШАГ 1: СПИСОК ВСЕХ БУНКЕРОВИ КНОПКА СОЗДАНИЯ -->
+                <div id="authRoomListStep">
+                    <div class="card">
+                        <div class="card-title">🔍 Активные Бункеры</div>
+                        <div id="availableRoomsList">
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Загрузка доступных комнат...</div>
+                        </div>
                     </div>
+
+                    <button class="btn btn-amber" onclick="openCreateStep()">➕ Создать Новый Бункер</button>
                 </div>
 
-                <div id="authContainer" class="card">
-                    <div class="mode-toggle">
-                        <div class="mode-btn active" id="tabJoinBtn" onclick="switchAuthMode('join')">Войти в Бункер</div>
-                        <div class="mode-btn" id="tabCreateBtn" onclick="switchAuthMode('create')">Создать Бункер</div>
-                    </div>
+                <!-- ШАГ 2: ВВОД ДАННЫХ И ПАРОЛЯ -->
+                <div id="authFormStep" class="card" style="display: none;">
+                    <button class="back-btn" onclick="backToRoomListStep()">◀️ Назад к списку бункеров</button>
+                    
+                    <div class="card-title" id="authStepTitle">🚪 Вход в Бункер</div>
 
                     <!-- Выбор Аватарки -->
-                    <label>Выберите Аватарку:</label>
+                    <label>Выберите вашу Аватарку:</label>
                     <div class="avatar-grid" id="avatarPicker">
                         <div class="avatar-option selected" onclick="selectAvatar(this, '🦁')">🦁</div>
                         <div class="avatar-option" onclick="selectAvatar(this, '🐺')">🐺</div>
@@ -490,43 +507,44 @@
                         <div class="avatar-option" onclick="selectAvatar(this, '👽')">👽</div>
                     </div>
 
-                    <!-- ФОРМА ВХОДА -->
-                    <div id="joinForm">
+                    <!-- Поля для входа в существующий бункер -->
+                    <div id="joinFields">
                         <div class="form-group">
-                            <label>Код Бункера:</label>
-                            <input type="text" id="joinRoomCode" placeholder="Выберите из списка или введите" style="text-transform: uppercase;">
+                            <label>Код Выбранного Бункера:</label>
+                            <input type="text" id="joinRoomCode" readonly style="background: rgba(255,255,255,0.05); text-transform: uppercase;">
                         </div>
                         <div class="form-group">
-                            <label>Пароль:</label>
-                            <input type="password" id="joinPassword" placeholder="Пароль от бункера">
+                            <label>Пароль от бункера:</label>
+                            <input type="password" id="joinPassword" placeholder="Введите пароль">
                         </div>
                         <div class="form-group">
-                            <label>Ваше Имя:</label>
-                            <input type="text" id="joinPlayerName" placeholder="Ваше имя игрока">
+                            <label>Ваше Имя Игрока:</label>
+                            <input type="text" id="joinPlayerName" placeholder="Ваше имя">
                         </div>
-                        <button class="btn" onclick="joinRoom()">🚪 Войти в Игру</button>
+                        <button class="btn" onclick="submitJoinRoom()">🚪 Войти в Бункер</button>
                     </div>
 
-                    <!-- ФОРМА СОЗДАНИЯ -->
-                    <div id="createForm" style="display: none;">
+                    <!-- Поля для создания нового бункера -->
+                    <div id="createFields" style="display: none;">
                         <div class="form-group">
                             <label>Код Нового Бункера:</label>
                             <input type="text" id="createRoomCode" placeholder="Например: B1" style="text-transform: uppercase;">
                         </div>
                         <div class="form-group">
-                            <label>Пароль для входа:</label>
-                            <input type="password" id="createPassword" placeholder="Придумайте пароль">
+                            <label>Придумайте Пароль:</label>
+                            <input type="password" id="createPassword" placeholder="Пароль для игроков">
                         </div>
                         <div class="form-group">
-                            <label>Ваше Имя (Игрок):</label>
-                            <input type="text" id="createAdminName" placeholder="Ваше имя игрока">
+                            <label>Ваше Имя Игрока:</label>
+                            <input type="text" id="createAdminName" placeholder="Ваше имя">
                         </div>
                         <div class="form-group">
                             <label>Мест в бункере (Победителей):</label>
                             <input type="number" id="createSeats" value="3" min="1" max="15">
                         </div>
-                        <button class="btn btn-amber" onclick="createRoom()">🚀 Создать и Войти</button>
+                        <button class="btn btn-amber" onclick="submitCreateRoom()">🚀 Создать и Войти</button>
                     </div>
+
                 </div>
             </div>
 
@@ -615,7 +633,7 @@
 
         </main>
 
-        <!-- BOTTOM NAVIGATION BAR -->
+        <!-- FIXED BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon">🏠</span>
@@ -697,13 +715,6 @@
             if (pollTimer) clearInterval(pollTimer);
         }
 
-        function switchAuthMode(mode) {
-            document.getElementById('tabJoinBtn').classList.toggle('active', mode === 'join');
-            document.getElementById('tabCreateBtn').classList.toggle('active', mode === 'create');
-            document.getElementById('joinForm').style.display = mode === 'join' ? 'block' : 'none';
-            document.getElementById('createForm').style.display = mode === 'create' ? 'block' : 'none';
-        }
-
         function switchTab(panelId, navEl) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -720,15 +731,18 @@
                 container.innerHTML = '';
 
                 if (!data.rooms || data.rooms.length === 0) {
-                    container.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-muted);">Нет активных бункеров. Создайте первый!</div>';
+                    container.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-muted);">Нет активных бункеров. Создайте первый ниже!</div>';
                     return;
                 }
 
                 data.rooms.forEach(r => {
                     container.innerHTML += `
-                        <div class="room-item-btn" onclick="selectRoom('${r.code}')">
-                            <span><strong>Код: ${r.code}</strong> (${r.active_count} игроков)</span>
-                            <span class="badge badge-active">Выбрать</span>
+                        <div class="room-item-card" onclick="openJoinStep('${r.code}')">
+                            <div>
+                                <strong style="color: var(--danger-red); font-size: 1rem;">Код: ${r.code}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Участников: ${r.active_count} | Мест: ${r.seats}</div>
+                            </div>
+                            <span class="badge badge-active">Войти ➔</span>
                         </div>
                     `;
                 });
@@ -737,13 +751,35 @@
             }
         }
 
-        function selectRoom(code) {
-            switchAuthMode('join');
+        function openJoinStep(code) {
+            document.getElementById('authRoomListStep').style.display = 'none';
+            document.getElementById('authFormStep').style.display = 'block';
+            document.getElementById('authStepTitle').innerText = `🚪 Вход в Бункер (${code})`;
+            document.getElementById('joinFields').style.display = 'block';
+            document.getElementById('createFields').style.display = 'none';
+
             document.getElementById('joinRoomCode').value = code;
+            document.getElementById('joinPassword').value = '';
             document.getElementById('joinPassword').focus();
         }
 
-        async function createRoom() {
+        function openCreateStep() {
+            document.getElementById('authRoomListStep').style.display = 'none';
+            document.getElementById('authFormStep').style.display = 'block';
+            document.getElementById('authStepTitle').innerText = '👑 Создание Нового Бункера';
+            document.getElementById('joinFields').style.display = 'none';
+            document.getElementById('createFields').style.display = 'block';
+
+            document.getElementById('createRoomCode').focus();
+        }
+
+        function backToRoomListStep() {
+            document.getElementById('authRoomListStep').style.display = 'block';
+            document.getElementById('authFormStep').style.display = 'none';
+            fetchAvailableRooms();
+        }
+
+        async function submitCreateRoom() {
             const code = document.getElementById('createRoomCode').value.trim();
             const password = document.getElementById('createPassword').value.trim();
             const adminName = document.getElementById('createAdminName').value.trim();
@@ -769,7 +805,7 @@
             onJoinedRoom();
         }
 
-        async function joinRoom() {
+        async function submitJoinRoom() {
             const code = document.getElementById('joinRoomCode').value.trim();
             const password = document.getElementById('joinPassword').value.trim();
             const playerName = document.getElementById('joinPlayerName').value.trim();
@@ -812,6 +848,8 @@
         function leaveRoom() {
             clearSession();
             document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('authRoomListStep').style.display = 'block';
+            document.getElementById('authFormStep').style.display = 'none';
             document.getElementById('gameWrapper').style.display = 'none';
             document.getElementById('bottomNav').style.display = 'none';
             document.getElementById('leaveBtn').style.display = 'none';
