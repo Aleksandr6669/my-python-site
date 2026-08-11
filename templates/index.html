@@ -100,7 +100,7 @@
             background: var(--bg-dark);
         }
 
-        /* Fixed Perfectly Aligned Header */
+        /* Fixed Header with Dynamic Theme Integration */
         header {
             position: fixed;
             top: 0;
@@ -140,7 +140,7 @@
         }
 
         .theme-palette-btn {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid var(--border-color);
             color: white;
             border-radius: 8px;
@@ -159,11 +159,12 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
+        /* Dynamic Theme Adaptive Room Badge */
         .room-badge {
             font-size: 0.75rem;
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--danger-red);
-            border: 1px solid var(--danger-red);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--accent-amber);
+            border: 1px solid var(--border-color);
             padding: 0 10px;
             height: 32px;
             border-radius: 8px;
@@ -173,12 +174,14 @@
             justify-content: center;
             flex-shrink: 0;
             white-space: nowrap;
+            backdrop-filter: blur(8px);
         }
 
+        /* Dynamic Theme Adaptive Exit Button */
         .leave-btn {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid var(--danger-red);
-            color: white;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
             font-size: 0.75rem;
             border-radius: 8px;
             padding: 0 10px;
@@ -187,9 +190,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
             flex-shrink: 0;
             white-space: nowrap;
+            transition: all 0.2s;
+            backdrop-filter: blur(8px);
+        }
+
+        .leave-btn:hover, .leave-btn:active {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger-red);
+            color: var(--danger-red);
+        }
+
+        /* Toast Container Position Offset Below Header */
+        .toast-container-offset {
+            margin-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
         }
 
         /* Main Content Scrollable Area */
@@ -473,7 +489,7 @@
 <body data-theme="red">
 
     <div class="app-wrapper">
-        <!-- FIXED PERFECTLY ALIGNED HEADER -->
+        <!-- FIXED HEADER WITH DYNAMIC THEME BADGES -->
         <header>
             <div class="brand-title">БУНКЕР</div>
             <div class="header-actions">
@@ -679,7 +695,7 @@
     </div>
 
     <script>
-        // Toast Notification Helper
+        // Toast Notification Helper (Offset below top header)
         const Toast = Swal.mixin({
             toast: true,
             position: 'top',
@@ -687,7 +703,10 @@
             timer: 2500,
             timerProgressBar: true,
             background: '#1f2937',
-            color: '#fff'
+            color: '#fff',
+            customClass: {
+                container: 'toast-container-offset'
+            }
         });
 
         // Custom Theme Selection Modal
