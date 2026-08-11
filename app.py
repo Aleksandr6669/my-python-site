@@ -287,6 +287,32 @@ def room_status(room_code):
         "round_votes_summary": room["round_votes_summary"]
     })
 
+@app.route("/api/update_profile", methods=["POST"])
+def update_profile():
+    global ROOMS
+    ROOMS = load_rooms()
+    data = request.json or {}
+    room_code = unquote(data.get("room_code", "")).upper()
+    player_id = data.get("player_id")
+    new_name = data.get("name", "").strip()
+    new_avatar = data.get("avatar", "").strip()
+
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+        return jsonify({"error": "Бункер не найден"}), 404
+
+    room = ROOMS[room_code]
+    player = room["players"].get(player_id)
+    if not player:
+        return jsonify({"error": "Игрок не найден в бункере"}), 404
+
+    if new_name:
+        player["name"] = new_name
+    if new_avatar:
+        player["avatar"] = new_avatar
+
+    save_rooms()
+    return jsonify({"success": True})
+
 @app.route("/api/kick_player", methods=["POST"])
 def kick_player():
     global ROOMS

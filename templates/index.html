@@ -664,9 +664,37 @@
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 3: УПРАВЛЕНИЕ ИГРОЙ -->
+                <!-- ВКЛАДКА 3: НАСТРОЙКИ И УПРАВЛЕНИЕ ИГРОЙ -->
                 <div id="panelAdmin" class="tab-panel animate__animated animate__fadeInUp">
+                    
+                    <!-- РАЗДЕЛ: НАСТРОЙКИ ПРОФИЛЯ ИГРОКА (ДЛЯ ВСЕХ УЧАСТНИКОВ) -->
                     <div class="card">
+                        <div class="card-title"><i class="fa-solid fa-user-gear"></i> Настройки Профиля</div>
+                        
+                        <label>Сменить Аватарку:</label>
+                        <div class="avatar-grid" id="settingsAvatarPicker">
+                            <div class="avatar-option selected" onclick="selectSettingsAvatar(this, '🦁')">🦁</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐺')">🐺</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐘')">🐘</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐆')">🐆</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🦊')">🦊</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐼')">🐼</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐻')">🐻</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🦉')">🦉</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🤖')">🤖</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '👽')">👽</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ваше Имя Игрока:</label>
+                            <input type="text" id="settingsPlayerNameInput" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false">
+                        </div>
+
+                        <button class="btn btn-amber" onclick="submitUpdateProfile()"><i class="fa-solid fa-floppy-disk"></i> Сохранить Настройки</button>
+                    </div>
+
+                    <!-- РАЗДЕЛ: УПРАВЛЕНИЕ ОРГАНИЗАТОРА (ТОЛЬКО ДЛЯ АДМИНА) -->
+                    <div class="card" style="margin-top: 14px;">
                         <div class="card-title"><i class="fa-solid fa-sliders"></i> Управление Отбором</div>
                         
                         <div id="adminControls">
@@ -680,6 +708,7 @@
                             Управление голосованием и раундами доступно организатору отбора.
                         </div>
                     </div>
+
                 </div>
 
             </div>
@@ -698,7 +727,7 @@
             </div>
             <div class="nav-item" onclick="switchTab('panelAdmin', this)">
                 <span class="icon"><i class="fa-solid fa-sliders"></i></span>
-                <span>Управление</span>
+                <span>Настройки</span>
             </div>
         </nav>
     </div>
@@ -800,6 +829,7 @@
         let currentPlayerId = null;
         let isAdmin = false;
         let selectedAvatar = '🦁';
+        let selectedSettingsAvatar = '🦁';
         let pollTimer = null;
         let listPollTimer = null;
         let previousEliminatedStatus = false;
@@ -815,6 +845,7 @@
             if (savedName) {
                 document.getElementById('joinPlayerName').value = savedName;
                 document.getElementById('createAdminName').value = savedName;
+                document.getElementById('settingsPlayerNameInput').value = savedName;
             }
         }
 
@@ -829,9 +860,15 @@
         }
 
         function selectAvatar(el, avatar) {
-            document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelectorAll('#avatarPicker .avatar-option').forEach(opt => opt.classList.remove('selected'));
             el.classList.add('selected');
             selectedAvatar = avatar;
+        }
+
+        function selectSettingsAvatar(el, avatar) {
+            document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedSettingsAvatar = avatar;
         }
 
         function saveSession(roomCode, playerId, adminFlag) {
@@ -1004,6 +1041,36 @@
             Toast.fire({ icon: 'success', title: 'Успешный вход в отбор!' });
         }
 
+        async function submitUpdateProfile() {
+            const newName = document.getElementById('settingsPlayerNameInput').value.trim();
+            if (!newName) {
+                Toast.fire({ icon: 'warning', title: 'Укажите ваше имя!' });
+                return;
+            }
+
+            savePlayerNameLocally(newName);
+
+            const res = await fetch('/api/update_profile', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    room_code: currentRoom,
+                    player_id: currentPlayerId,
+                    name: newName,
+                    avatar: selectedSettingsAvatar
+                })
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                Toast.fire({ icon: 'error', title: data.error });
+                return;
+            }
+
+            Toast.fire({ icon: 'success', title: 'Профиль успешно обновлен!' });
+            fetchRoomStatus();
+        }
+
         function onJoinedRoom(initialData) {
             stopRoomListPolling();
             document.getElementById('authScreen').style.display = 'none';
@@ -1102,9 +1169,22 @@
             };
             document.getElementById('gameStatusText').innerText = statusMap[data.status] || data.status;
 
+            // Pre-fill profile settings
+            const me = data.players.find(p => p.id === currentPlayerId);
+            if (me) {
+                document.getElementById('settingsPlayerNameInput').value = me.name;
+                selectedSettingsAvatar = me.avatar || '🦁';
+                document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => {
+                    if (opt.innerText.trim() === selectedSettingsAvatar) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+            }
+
             // Check if Game Completed (Survivors Confetti!)
             if (data.status === 'finished') {
-                const me = data.players.find(p => p.id === currentPlayerId);
                 if (me && me.status === 'active' && !previousEliminatedStatus) {
                     try {
                         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
@@ -1141,7 +1221,6 @@
             });
 
             // Update Voting Candidates List
-            const me = data.players.find(p => p.id === currentPlayerId);
             const isMeEliminated = me && me.status === 'eliminated';
 
             // TRIGGER ELIMINATION NOTIFICATION
