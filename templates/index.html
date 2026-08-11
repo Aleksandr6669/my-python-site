@@ -20,7 +20,7 @@
     <style>
         :root {
             --bg-dark: #0b0f19;
-            --card-bg: rgba(22, 30, 46, 0.9);
+            --card-bg: rgba(22, 30, 46, 0.95);
             --border-color: rgba(239, 68, 68, 0.3);
             --danger-red: #ef4444;
             --danger-hover: #dc2626;
@@ -75,14 +75,33 @@
             font-weight: 800;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .room-badge {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             background: rgba(239, 68, 68, 0.15);
             color: var(--danger-red);
             border: 1px solid var(--danger-red);
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 12px;
             font-weight: 600;
+        }
+
+        .leave-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+
+        .leave-btn:hover {
+            color: var(--danger-red);
         }
 
         /* Main Content Viewport */
@@ -90,14 +109,14 @@
             flex: 1;
             overflow-y: auto;
             padding: 16px;
-            padding-bottom: 80px; /* Space for bottom nav */
+            padding-bottom: 90px; /* Space for bottom nav */
         }
 
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 20px;
+            padding: 18px;
             margin-bottom: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
@@ -114,7 +133,7 @@
 
         /* Form Inputs */
         .form-group {
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         label {
@@ -150,7 +169,7 @@
             color: white;
             border: none;
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
@@ -199,7 +218,7 @@
             background: rgba(11, 15, 25, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            padding: 12px 14px;
+            padding: 10px 12px;
         }
 
         .player-item.eliminated {
@@ -208,13 +227,19 @@
             background: rgba(239, 68, 68, 0.08);
         }
 
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .player-name {
             font-weight: 500;
             font-size: 0.95rem;
         }
 
         .badge {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             padding: 4px 8px;
             border-radius: 10px;
             font-weight: 600;
@@ -229,6 +254,15 @@
         .badge-eliminated {
             background: rgba(239, 68, 68, 0.2);
             color: var(--danger-red);
+        }
+
+        .kick-btn {
+            background: none;
+            border: none;
+            color: var(--danger-red);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
         }
 
         /* Tab Content Control */
@@ -273,7 +307,7 @@
         }
 
         .nav-item .icon {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
         }
 
         .nav-item.active {
@@ -304,6 +338,23 @@
             background: var(--danger-red);
             color: white;
         }
+
+        .room-item-btn {
+            background: rgba(11, 15, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .room-item-btn:hover {
+            border-color: var(--danger-red);
+        }
     </style>
 </head>
 <body>
@@ -311,7 +362,10 @@
     <div class="app-wrapper">
         <header>
             <div class="brand-title">БУНКЕР</div>
-            <div class="room-badge" id="headerRoomBadge">Не в игре</div>
+            <div class="header-actions">
+                <div class="room-badge" id="headerRoomBadge">Не в игре</div>
+                <button class="leave-btn" id="leaveBtn" style="display: none;" onclick="leaveRoom()">🚪 Выйти</button>
+            </div>
         </header>
 
         <main>
@@ -321,133 +375,150 @@
                 📲 Сохранить на главный экран (PWA)
             </button>
 
-            <!-- ВХОД / СОЗДАНИЕ (Если не в комнате) -->
-            <div id="authContainer" class="card">
-                <div class="mode-toggle">
-                    <div class="mode-btn active" id="tabJoinBtn" onclick="switchAuthMode('join')">Войти в Бункер</div>
-                    <div class="mode-btn" id="tabCreateBtn" onclick="switchAuthMode('create')">Создать Бункер</div>
-                </div>
-
-                <!-- ФОРМА ВХОДА -->
-                <div id="joinForm">
-                    <div class="form-group">
-                        <label>Код Бункера:</label>
-                        <input type="text" id="joinRoomCode" placeholder="Например: B1" style="text-transform: uppercase;">
-                    </div>
-                    <div class="form-group">
-                        <label>Пароль:</label>
-                        <input type="password" id="joinPassword" placeholder="Пароль от бункера">
-                    </div>
-                    <div class="form-group">
-                        <label>Ваше Имя:</label>
-                        <input type="text" id="joinPlayerName" placeholder="Ваш никнейм">
-                    </div>
-                    <button class="btn" onclick="joinRoom()">🚪 Войти в Игру</button>
-                </div>
-
-                <!-- ФОРМА СОЗДАНИЯ (Админ) -->
-                <div id="createForm" style="display: none;">
-                    <div class="form-group">
-                        <label>Код Нового Бункера:</label>
-                        <input type="text" id="createRoomCode" placeholder="Например: VIP" style="text-transform: uppercase;">
-                    </div>
-                    <div class="form-group">
-                        <label>Пароль для входа:</label>
-                        <input type="password" id="createPassword" placeholder="Придумайте пароль">
-                    </div>
-                    <div class="form-group">
-                        <label>Имя Создателя (Админ):</label>
-                        <input type="text" id="createAdminName" placeholder="Имя организатора">
-                    </div>
-                    <div class="form-group">
-                        <label>Мест в бункере (Победителей):</label>
-                        <input type="number" id="createSeats" value="3" min="1" max="15">
-                    </div>
-                    <button class="btn btn-amber" onclick="createRoom()">👑 Создать Бункер</button>
-                </div>
-            </div>
-
-            <!-- ВКЛАДКА 1: СОСТОЯНИЕ БУНКЕРА И СПИСОК -->
-            <div id="panelBunker" class="tab-panel active">
+            <!-- ЭКРАН ВХОДА (Показывается, когда пользователь не в бункере) -->
+            <div id="authScreen">
+                
+                <!-- СПИСОК АКТИВНЫХ БУНКЕРОВ -->
                 <div class="card">
-                    <div class="card-title">🛡️ Состояние Бункера</div>
-                    <div style="font-size: 0.9rem; margin-bottom: 12px;">
-                        Статус: <strong id="gameStatusText" style="color: var(--accent-amber);">Ожидание игроков</strong>
-                    </div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        Раунд: <strong id="roundText" style="color: white;">1</strong> | 
-                        Свободных мест: <strong id="seatsText" style="color: white;">3</strong>
+                    <div class="card-title">🔍 Активные Бункеры</div>
+                    <div id="availableRoomsList">
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">Загрузка доступных комнат...</div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-title">👥 Участники в Бункере</div>
-                    <ul class="player-list" id="playerList"></ul>
-                </div>
-            </div>
+                <div id="authContainer" class="card">
+                    <div class="mode-toggle">
+                        <div class="mode-btn active" id="tabJoinBtn" onclick="switchAuthMode('join')">Войти в Бункер</div>
+                        <div class="mode-btn" id="tabCreateBtn" onclick="switchAuthMode('create')">Создать Бункер</div>
+                    </div>
 
-            <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ -->
-            <div id="panelVote" class="tab-panel">
-                <div class="card">
-                    <div class="card-title">🗳️ Голосование</div>
-                    
-                    <div id="votingFormContainer">
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                            Выберите участника, которого нужно <strong>НЕ пускать</strong> в бункер:
+                    <!-- ФОРМА ВХОДА -->
+                    <div id="joinForm">
+                        <div class="form-group">
+                            <label>Код Бункера:</label>
+                            <input type="text" id="joinRoomCode" placeholder="Выберите из списка выше или введите" style="text-transform: uppercase;">
                         </div>
                         <div class="form-group">
-                            <label>Кандидат на выбывание:</label>
-                            <select id="voteTargetSelect">
-                                <option value="">-- Выберите игрока --</option>
-                            </select>
+                            <label>Пароль:</label>
+                            <input type="password" id="joinPassword" placeholder="Пароль от бункера">
                         </div>
-                        <button class="btn" id="castVoteBtn" onclick="submitVote()">🎯 Отдать Голос</button>
+                        <div class="form-group">
+                            <label>Ваше Имя:</label>
+                            <input type="text" id="joinPlayerName" placeholder="Ваш никнейм">
+                        </div>
+                        <button class="btn" onclick="joinRoom()">🚪 Войти в Игру</button>
                     </div>
 
-                    <div id="votedSuccessMessage" style="display: none; text-align: center; padding: 20px; color: var(--success-green); font-weight: 600;">
-                        ✅ Ваш голос принят и учтен! Ожидайте подведения итогов раунда.
-                    </div>
-
-                    <div id="eliminatedVoteWarning" style="display: none; text-align: center; padding: 20px; color: var(--danger-red); font-weight: 600;">
-                        🚫 Вы выбыли из бункера и больше не можете голосовать!
+                    <!-- ФОРМА СОЗДАНИЯ (Админ) -->
+                    <div id="createForm" style="display: none;">
+                        <div class="form-group">
+                            <label>Код Нового Бункера:</label>
+                            <input type="text" id="createRoomCode" placeholder="Например: B1" style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label>Пароль для входа:</label>
+                            <input type="password" id="createPassword" placeholder="Придумайте пароль">
+                        </div>
+                        <div class="form-group">
+                            <label>Имя Создателя (Админ):</label>
+                            <input type="text" id="createAdminName" placeholder="Имя организатора">
+                        </div>
+                        <div class="form-group">
+                            <label>Мест в бункере (Победителей):</label>
+                            <input type="number" id="createSeats" value="3" min="1" max="15">
+                        </div>
+                        <button class="btn btn-amber" onclick="createRoom()">👑 Создать и Войти</button>
                     </div>
                 </div>
             </div>
 
-            <!-- ВКЛАДКА 3: РЕЗУЛЬТАТЫ -->
-            <div id="panelResults" class="tab-panel">
-                <div class="card">
-                    <div class="card-title">📊 Результаты Раунда</div>
-                    
-                    <div id="eliminatedResultText" style="text-align: center; font-size: 1.1rem; color: var(--danger-red); margin: 12px 0; font-weight: 700;">
-                        Ожидание завершения голосования...
+            <!-- ИГРОВОЙ ИНТЕРФЕЙС (Показывается только когда зашли в бункер) -->
+            <div id="gameWrapper" style="display: none;">
+
+                <!-- ВКЛАДКА 1: СОСТОЯНИЕ БУНКЕРА И СПИСОК -->
+                <div id="panelBunker" class="tab-panel active">
+                    <div class="card">
+                        <div class="card-title">🛡️ Состояние Бункера</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 12px;">
+                            Статус: <strong id="gameStatusText" style="color: var(--accent-amber);">Ожидание игроков</strong>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            Раунд: <strong id="roundText" style="color: white;">1</strong> | 
+                            Мест в бункере: <strong id="seatsText" style="color: white;">3</strong>
+                        </div>
                     </div>
 
-                    <div class="form-group" id="votesSummaryContainer"></div>
-                </div>
-            </div>
-
-            <!-- ВКЛАДКА 4: АДМИН ПАНЕЛЬ -->
-            <div id="panelAdmin" class="tab-panel">
-                <div class="card">
-                    <div class="card-title">⚙️ Панель Организатора</div>
-                    
-                    <div id="adminControls">
-                        <button class="btn btn-amber" style="margin-bottom: 10px;" onclick="adminStartGame()">🚀 Запустить Голосование (Раунд 1)</button>
-                        <button class="btn" style="margin-bottom: 10px;" onclick="adminTallyVotes()">📊 Подвести Итоги Раунда</button>
-                        <button class="btn btn-outline" onclick="adminNextRound()">▶️ Начать Следующий Раунд</button>
-                    </div>
-
-                    <div id="notAdminNotice" style="display: none; color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">
-                        Вы вошли как обычный участник. Управление игрой доступно только создателю бункера.
+                    <div class="card">
+                        <div class="card-title">👥 Участники в Бункере</div>
+                        <ul class="player-list" id="playerList"></ul>
                     </div>
                 </div>
+
+                <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ -->
+                <div id="panelVote" class="tab-panel">
+                    <div class="card">
+                        <div class="card-title">🗳️ Голосование</div>
+                        
+                        <div id="votingFormContainer">
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+                                Выберите участника, которого нужно <strong>НЕ пускать</strong> в бункер:
+                            </div>
+                            <div class="form-group">
+                                <label>Кандидат на выбывание:</label>
+                                <select id="voteTargetSelect">
+                                    <option value="">-- Выберите игрока --</option>
+                                </select>
+                            </div>
+                            <button class="btn" id="castVoteBtn" onclick="submitVote()">🎯 Отдать Голос</button>
+                        </div>
+
+                        <div id="votedSuccessMessage" style="display: none; text-align: center; padding: 20px; color: var(--success-green); font-weight: 600;">
+                            ✅ Ваш голос принят и учтен! Ожидайте подведения итогов раунда.
+                        </div>
+
+                        <div id="eliminatedVoteWarning" style="display: none; text-align: center; padding: 20px; color: var(--danger-red); font-weight: 600;">
+                            🚫 Вы выбыли из бункера и больше не можете голосовать!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ВКЛАДКА 3: РЕЗУЛЬТАТЫ -->
+                <div id="panelResults" class="tab-panel">
+                    <div class="card">
+                        <div class="card-title">📊 Результаты Раунда</div>
+                        
+                        <div id="eliminatedResultText" style="text-align: center; font-size: 1.1rem; color: var(--danger-red); margin: 12px 0; font-weight: 700;">
+                            Ожидание завершения голосования...
+                        </div>
+
+                        <div class="form-group" id="votesSummaryContainer"></div>
+                    </div>
+                </div>
+
+                <!-- ВКЛАДКА 4: АДМИН ПАНЕЛЬ -->
+                <div id="panelAdmin" class="tab-panel">
+                    <div class="card">
+                        <div class="card-title">⚙️ Панель Организатора</div>
+                        
+                        <div id="adminControls">
+                            <button class="btn btn-amber" style="margin-bottom: 10px;" onclick="adminStartGame()">🚀 Запустить Голосование (Раунд 1)</button>
+                            <button class="btn" style="margin-bottom: 10px;" onclick="adminTallyVotes()">📊 Подвести Итоги Раунда</button>
+                            <button class="btn btn-outline" style="margin-bottom: 14px;" onclick="adminNextRound()">▶️ Начать Следующий Раунд</button>
+                            <button class="btn btn-outline" style="border-color: var(--danger-red); color: var(--danger-red);" onclick="adminDeleteRoom()">🗑️ Удалить этот Бункер</button>
+                        </div>
+
+                        <div id="notAdminNotice" style="display: none; color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">
+                            Вы вошли как обычный участник. Управление игрой доступно только создателю бункера.
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </main>
 
-        <!-- BOTTOM NAVIGATION BAR -->
-        <nav class="bottom-nav">
+        <!-- BOTTOM NAVIGATION BAR (Скрыт пока не вошли в бункер) -->
+        <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon">🏠</span>
                 <span>Бункер</span>
@@ -494,6 +565,22 @@
         let isAdmin = false;
         let pollTimer = null;
 
+        function saveSession(roomCode, playerId, adminFlag) {
+            localStorage.setItem('bunker_session', JSON.stringify({
+                roomCode: roomCode,
+                playerId: playerId,
+                isAdmin: adminFlag
+            }));
+        }
+
+        function clearSession() {
+            localStorage.removeItem('bunker_session');
+            currentRoom = null;
+            currentPlayerId = null;
+            isAdmin = false;
+            if (pollTimer) clearInterval(pollTimer);
+        }
+
         function switchAuthMode(mode) {
             document.getElementById('tabJoinBtn').classList.toggle('active', mode === 'join');
             document.getElementById('tabCreateBtn').classList.toggle('active', mode === 'create');
@@ -503,10 +590,41 @@
 
         function switchTab(panelId, navEl) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => p = n.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
             document.getElementById(panelId).classList.add('active');
             if (navEl) navEl.classList.add('active');
+        }
+
+        async function fetchAvailableRooms() {
+            try {
+                const res = await fetch('/api/list_rooms');
+                const data = await res.json();
+                const container = document.getElementById('availableRoomsList');
+                container.innerHTML = '';
+
+                if (!data.rooms || data.rooms.length === 0) {
+                    container.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-muted);">Нет активных бункеров. Создайте первый!</div>';
+                    return;
+                }
+
+                data.rooms.forEach(r => {
+                    container.innerHTML += `
+                        <div class="room-item-btn" onclick="selectRoom('${r.code}')">
+                            <span><strong>Код: ${r.code}</strong> (${r.active_count} участников)</span>
+                            <span class="badge badge-active">Выбрать</span>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.log("Error loading rooms", e);
+            }
+        }
+
+        function selectRoom(code) {
+            switchAuthMode('join');
+            document.getElementById('joinRoomCode').value = code;
+            document.getElementById('joinPassword').focus();
         }
 
         async function createRoom() {
@@ -531,6 +649,7 @@
             currentPlayerId = data.player_id;
             isAdmin = true;
 
+            saveSession(currentRoom, currentPlayerId, isAdmin);
             onJoinedRoom();
         }
 
@@ -555,25 +674,72 @@
             currentPlayerId = data.player_id;
             isAdmin = false;
 
+            saveSession(currentRoom, currentPlayerId, isAdmin);
             onJoinedRoom();
         }
 
         function onJoinedRoom() {
-            document.getElementById('authContainer').style.display = 'none';
-            document.getElementById('headerRoomBadge').innerText = `Код: ${currentRoom}`;
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('gameWrapper').style.display = 'block';
+            document.getElementById('bottomNav').style.display = 'flex';
+            document.getElementById('leaveBtn').style.display = 'block';
+
+            document.getElementById('headerRoomBadge').innerText = `Код: ${currentRoom} ${isAdmin ? '👑' : ''}`;
             document.getElementById('notAdminNotice').style.display = isAdmin ? 'none' : 'block';
             document.getElementById('adminControls').style.display = isAdmin ? 'block' : 'none';
 
             fetchRoomStatus();
+            if (pollTimer) clearInterval(pollTimer);
             pollTimer = setInterval(fetchRoomStatus, 2000);
+        }
+
+        function leaveRoom() {
+            clearSession();
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('gameWrapper').style.display = 'none';
+            document.getElementById('bottomNav').style.display = 'none';
+            document.getElementById('leaveBtn').style.display = 'none';
+            document.getElementById('headerRoomBadge').innerText = 'Не в игре';
+            fetchAvailableRooms();
+        }
+
+        async function restoreSession() {
+            const saved = localStorage.getItem('bunker_session');
+            if (!saved) {
+                fetchAvailableRooms();
+                return;
+            }
+
+            try {
+                const session = JSON.parse(saved);
+                currentRoom = session.roomCode;
+                currentPlayerId = session.playerId;
+                isAdmin = session.isAdmin;
+
+                const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
+                if (res.ok) {
+                    onJoinedRoom();
+                } else {
+                    clearSession();
+                    fetchAvailableRooms();
+                }
+            } catch (e) {
+                clearSession();
+                fetchAvailableRooms();
+            }
         }
 
         async function fetchRoomStatus() {
             if (!currentRoom) return;
 
-            const res = await fetch(`/api/room_status/${currentRoom}`);
+            const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
             const data = await res.json();
-            if (data.error) return;
+
+            if (!res.ok) {
+                alert(data.error || "Вышли из комнаты");
+                leaveRoom();
+                return;
+            }
 
             // Update Status Texts
             document.getElementById('roundText').innerText = data.round;
@@ -592,12 +758,24 @@
             playerList.innerHTML = '';
             data.players.forEach(p => {
                 const isEliminated = p.status === 'eliminated';
+                const isTargetAdmin = p.id === data.admin_id;
+                
+                let kickBtnHtml = '';
+                if (isAdmin && !isTargetAdmin && p.id !== currentPlayerId) {
+                    kickBtnHtml = `<button class="kick-btn" onclick="adminKickPlayer('${p.id}')">❌</button>`;
+                }
+
                 playerList.innerHTML += `
                     <li class="player-item ${isEliminated ? 'eliminated' : ''}">
-                        <span class="player-name">${p.name} ${p.id === data.admin_id ? '👑' : ''}</span>
-                        <span class="badge ${isEliminated ? 'badge-eliminated' : 'badge-active'}">
-                            ${isEliminated ? 'Выбыл' : 'В игре'}
-                        </span>
+                        <div class="player-info">
+                            <span class="player-name">${p.name} ${isTargetAdmin ? '👑' : ''}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="badge ${isEliminated ? 'badge-eliminated' : 'badge-active'}">
+                                ${isEliminated ? 'Выбыл' : 'В игре'}
+                            </span>
+                            ${kickBtnHtml}
+                        </div>
                     </li>
                 `;
             });
@@ -711,6 +889,37 @@
                 switchTab('panelVote');
             }
         }
+
+        async function adminDeleteRoom() {
+            if (!confirm("Вы действительно хотите удалить этот бункер и распустить всех игроков?")) return;
+
+            const res = await fetch('/api/delete_room', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_code: currentRoom, admin_id: currentPlayerId})
+            });
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            else {
+                leaveRoom();
+            }
+        }
+
+        async function adminKickPlayer(targetId) {
+            if (!confirm("Исключить этого игрока из бункера?")) return;
+
+            const res = await fetch('/api/kick_player', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_code: currentRoom, admin_id: currentPlayerId, target_id: targetId})
+            });
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            else fetchRoomStatus();
+        }
+
+        // Initialize App Session
+        restoreSession();
     </script>
 </body>
 </html>

@@ -23,6 +23,19 @@ def service_worker():
 
 # --- API ENDPOINTS ---
 
+@app.route("/api/list_rooms", methods=["GET"])
+def list_rooms():
+    active_rooms = []
+    for code, room in ROOMS.items():
+        active_rooms.append({
+            "code": code,
+            "seats": room["seats"],
+            "status": room["status"],
+            "players_count": len(room["players"]),
+            "active_count": len([p for p in room["players"].values() if p["status"] == "active"])
+        })
+    return jsonify({"rooms": active_rooms})
+
 @app.route("/api/create_room", methods=["POST"])
 def create_room():
     data = request.json or {}
@@ -94,10 +107,16 @@ def join_room():
 @app.route("/api/room_status/<room_code>", methods=["GET"])
 def room_status(room_code):
     room_code = room_code.upper()
+    player_id = request.args.get("player_id")
+
     if room_code not in ROOMS:
-        return jsonify({"error": "Бункер не найден"}), 404
+        return jsonify({"error": "Бункер был удален или не существует", "code": "ROOM_DELETED"}), 404
 
     room = ROOMS[room_code]
+
+    if player_id and player_id not in room["players"]:
+        return jsonify({"error": "Вы были исключены из бункера", "code": "PLAYER_KICKED"}), 403
+
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     voted_count = len([p for p in active_players if p["voted_for"] is not None])
 
@@ -113,6 +132,44 @@ def room_status(room_code):
         "last_eliminated": room["last_eliminated"],
         "round_votes_summary": room["round_votes_summary"]
     })
+
+@app.route("/api/kick_player", methods=["POST"])
+def kick_player():
+    data = request.json or {}
+    room_code = data.get("room_code", "").upper()
+    admin_id = data.get("admin_id")
+    target_id = data.get("target_id")
+
+    if room_code not in ROOMS:
+        return jsonify({"error": "Бункер не найден"}), 404
+
+    room = ROOMS[room_code]
+    if room["admin_id"] != admin_id:
+        return jsonify({"error": "Только администратор может удалять игроков"}), 403
+
+    if target_id == admin_id:
+        return jsonify({"error": "Администратор не может удалить себя"}), 400
+
+    if target_id in room["players"]:
+        del room["players"][target_id]
+
+    return jsonify({"success": True})
+
+@app.route("/api/delete_room", methods=["POST"])
+def delete_room():
+    data = request.json or {}
+    room_code = data.get("room_code", "").upper()
+    admin_id = data.get("admin_id")
+
+    if room_code not in ROOMS:
+        return jsonify({"error": "Бункер не найден"}), 404
+
+    room = ROOMS[room_code]
+    if room["admin_id"] != admin_id:
+        return jsonify({"error": "Только администратор может удалить бункер"}), 403
+
+    del ROOMS[room_code]
+    return jsonify({"success": True})
 
 @app.route("/api/start_game", methods=["POST"])
 def start_game():
