@@ -127,7 +127,7 @@ def join_room():
     if not room_code or not password or not player_name:
         return jsonify({"error": "Заполните все поля"}), 400
 
-    # Auto-recovery for serverless instances
+    # Auto-recovery for serverless cold restarts
     if room_code not in ROOMS:
         admin_id = str(uuid.uuid4())
         ROOMS[room_code] = {
@@ -200,12 +200,27 @@ def room_status(room_code):
     room_code = room_code.upper()
     player_id = request.args.get("player_id")
 
+    # Auto-recreate room on serverless cold starts if missing so status NEVER returns 404
     if room_code not in ROOMS:
-        return jsonify({"error": "Бункер не найден", "code": "ROOM_DELETED"}), 404
+        admin_id = player_id if player_id else str(uuid.uuid4())
+        ROOMS[room_code] = {
+            "code": room_code,
+            "password": "",
+            "seats": 3,
+            "status": "lobby",
+            "round": 1,
+            "admin_id": admin_id,
+            "players": {
+                admin_id: {"id": admin_id, "name": "Игрок", "avatar": "👤", "status": "active", "voted_for": None}
+            },
+            "last_eliminated": None,
+            "round_votes_summary": {}
+        }
+        save_rooms()
 
     room = ROOMS[room_code]
 
-    # Auto-restore player if missing due to cold restart
+    # Auto-restore player if missing
     if player_id and player_id not in room["players"]:
         room["players"][player_id] = {
             "id": player_id,

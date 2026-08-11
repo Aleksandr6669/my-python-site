@@ -403,16 +403,16 @@
             display: block;
         }
 
-        /* Animated Bottom Navigation Bar Positioned at Very Bottom Edge */
+        /* Clean Animated Bottom Navigation Bar Glued Strictly to Bottom Edge */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: calc(62px + env(safe-area-inset-bottom, 0px));
-            padding-bottom: env(safe-area-inset-bottom, 0px);
+            height: calc(56px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: env(safe-area-inset-bottom, 12px);
             background: rgba(17, 24, 39, 0.98);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
@@ -428,47 +428,29 @@
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            font-size: 0.68rem;
+            font-size: 0.72rem;
             font-weight: 500;
             cursor: pointer;
-            gap: 3px;
-            width: 25%;
-            height: 100%;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-
-        .nav-item .icon {
-            font-size: 1.2rem;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s;
+            gap: 2px;
+            width: 24%;
+            height: 42px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
         }
 
         .nav-item.active {
             color: var(--danger-red);
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .nav-item .icon {
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
         }
 
         .nav-item.active .icon {
-            transform: translateY(-3px) scale(1.18);
+            transform: scale(1.15);
             color: var(--danger-red);
-            filter: drop-shadow(0 0 8px var(--danger-red));
-        }
-
-        .nav-item::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            width: 32px;
-            height: 3px;
-            background: var(--danger-red);
-            border-radius: 0 0 4px 4px;
-            opacity: 0;
-            transform: scaleX(0);
-            transition: transform 0.25s, opacity 0.25s;
-        }
-
-        .nav-item.active::after {
-            opacity: 1;
-            transform: scaleX(1);
         }
 
         .room-item-card {
@@ -693,7 +675,7 @@
 
         </main>
 
-        <!-- ANIMATED FIXED BOTTOM NAVIGATION BAR -->
+        <!-- FIXED ANIMATED BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon"><i class="fa-solid fa-house"></i></span>
@@ -813,7 +795,6 @@
         let selectedAvatar = '🦁';
         let pollTimer = null;
         let previousEliminatedStatus = false;
-        let consecutiveFailures = 0;
 
         function savePlayerNameLocally(val) {
             if (val) {
@@ -859,7 +840,6 @@
             currentPlayerId = null;
             isAdmin = false;
             previousEliminatedStatus = false;
-            consecutiveFailures = 0;
             if (pollTimer) clearInterval(pollTimer);
         }
 
@@ -987,7 +967,6 @@
         }
 
         function onJoinedRoom(initialData) {
-            consecutiveFailures = 0;
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('gameWrapper').style.display = 'block';
             document.getElementById('bottomNav').style.display = 'flex';
@@ -1055,23 +1034,10 @@
                 const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
                 const data = await res.json();
 
-                if (!res.ok) {
-                    consecutiveFailures++;
-                    if (consecutiveFailures >= 3) {
-                        leaveRoom();
-                    }
-                    return;
+                if (res.ok) {
+                    renderRoomData(data);
                 }
-
-                consecutiveFailures = 0; // Reset on success
-                renderRoomData(data);
-
-            } catch(e) {
-                consecutiveFailures++;
-                if (consecutiveFailures >= 3) {
-                    leaveRoom();
-                }
-            }
+            } catch(e) {}
         }
 
         function renderRoomData(data) {
