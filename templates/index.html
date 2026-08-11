@@ -2,55 +2,679 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Приветствие</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Бункер — PWA Игра на Выживание</title>
+    
+    <!-- PWA Primary Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Бункер">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(22, 30, 46, 0.85);
+            --border-glow: rgba(239, 68, 68, 0.3);
+            --danger-red: #ef4444;
+            --danger-hover: #dc2626;
+            --accent-amber: #f59e0b;
+            --success-green: #10b981;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.15), transparent 70%),
+                radial-gradient(circle at 80% 100%, rgba(245, 158, 11, 0.08), transparent 50%);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            color: #ffffff;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            letter-spacing: 3px;
+            color: var(--danger-red);
+            text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .pwa-install-btn {
+            display: none;
+            margin: 10px auto;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--card-bg);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 20px;
-            padding: 50px 40px;
-            text-align: center;
-            max-width: 480px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
         }
 
-        h1 {
-            font-size: 2.6rem;
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--accent-amber);
             margin-bottom: 16px;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        p {
-            font-size: 1.1rem;
+        .bunker-info {
+            background: rgba(15, 23, 42, 0.8);
+            border-left: 4px solid var(--danger-red);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .bunker-info h4 {
+            color: var(--danger-red);
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .bunker-info p {
+            font-size: 0.85rem;
             color: #d1d5db;
-            line-height: 1.6;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            flex: 1;
+            background: rgba(11, 15, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--danger-red);
+        }
+
+        .btn {
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--danger-hover);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-amber {
+            background: var(--accent-amber);
+        }
+
+        .btn-amber:hover {
+            background: #d97706;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .player-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+        }
+
+        .player-item.eliminated {
+            opacity: 0.5;
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            text-decoration: line-through;
+        }
+
+        .player-name {
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-green);
+            border: 1px solid var(--success-green);
+        }
+
+        .badge-eliminated {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+            border: 1px solid var(--danger-red);
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .remove-btn:hover {
+            color: var(--danger-red);
+        }
+
+        .voting-section {
+            margin-top: 16px;
+        }
+
+        .vote-card {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .voter-title {
+            font-size: 0.95rem;
+            color: var(--accent-amber);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .results-list {
+            margin-top: 12px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .winner-card {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .winner-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--success-green);
+            margin-bottom: 12px;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Screen visibility */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Добро пожаловать!</h1>
-        <p>Рады видеть вас на нашей странице. Это простой веб-сайт с приветствием, созданный на Python и Flask.</p>
+
+    <header>
+        <div class="title">БУНКЕР</div>
+        <div class="subtitle">Симулятор Голосования на Выживание</div>
+        <button id="pwaInstallBtn" class="pwa-install-btn">📲 Установить как PWA приложение</button>
+    </header>
+
+    <div class="container">
+
+        <!-- СЦЕНАРИЙ И БУНКЕР -->
+        <div class="bunker-info" id="bunkerInfo">
+            <h4 id="catastropheTitle">🚨 Катастрофа: Загрузка...</h4>
+            <p id="catastropheDesc">Случайные параметры бункера...</p>
+        </div>
+
+        <!-- ЭКРАН 1: РЕГИСТРАЦИЯ И ЛОББИ -->
+        <div id="setupScreen" class="screen active">
+            <div class="card">
+                <div class="card-title">📝 Регистрация Игроков</div>
+                <div class="form-group">
+                    <input type="text" id="playerNameInput" placeholder="Имя игрока..." autocomplete="off">
+                    <button class="btn" onclick="addPlayer()">Добавить</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; width: 100%;">
+                        Мест в бункере (Победителей):
+                        <input type="number" id="bunkerSeatsInput" value="3" min="1" max="10" style="width: 80px; padding: 6px 10px;">
+                    </label>
+                </div>
+
+                <ul class="player-list" id="lobbyPlayerList"></ul>
+
+                <button class="btn btn-full btn-amber" style="margin-top: 20px;" onclick="startGame()">🚀 Начать Игру</button>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 2: ИГРОВОЙ РАУНД И ГОЛОСОВАНИЕ -->
+        <div id="gameScreen" class="screen">
+            <div class="card">
+                <div class="card-title" id="roundTitle">️ Голосование: Раунд 1</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                    Каждый живой игрок должен проголосовать против того, кого НЕ пускают в бункер. Выбывшие игроки голосовать не могут!
+                </p>
+
+                <div class="vote-card">
+                    <div class="voter-title">Кто голосует:</div>
+                    <select id="voterSelect" onchange="updateTargetSelect()">
+                        <option value="">-- Выберите голосующего --</option>
+                    </select>
+
+                    <div class="voter-title" style="margin-top: 12px;">Против кого голос:</div>
+                    <select id="targetSelect">
+                        <option value="">-- Выберите кандидата на вылет --</option>
+                    </select>
+
+                    <button class="btn btn-full" style="margin-top: 14px;" onclick="castVote()">📥 Сдать Голос</button>
+                </div>
+
+                <div class="card-title" style="font-size: 1rem; margin-top: 20px;">Статус Голосования в Раунде</div>
+                <div id="votedStatusList" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;"></div>
+
+                <button class="btn btn-full btn-amber" id="finishRoundBtn" onclick="tallyVotes()" disabled>📊 Подвести Итоги Раунда</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">👥 Игроки и Статусы</div>
+                <ul class="player-list" id="activePlayerList"></ul>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 3: ИТОГИ РАУНДА -->
+        <div id="resultScreen" class="screen">
+            <div class="card">
+                <div class="card-title">⚠️ Итоги Голосования</div>
+                <div id="roundEliminatedInfo" style="font-size: 1.1rem; text-align: center; margin: 15px 0; color: var(--danger-red); font-weight: bold;"></div>
+                
+                <div class="voter-title">Распределение голосов:</div>
+                <div class="results-list" id="voteResultsList"></div>
+
+                <button class="btn btn-full btn-amber" style="margin-top: 20px;" onclick="nextRound()">▶️ Следующий Раунд</button>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 4: ПОБЕДИТЕЛИ / КОНЕЦ ИГРЫ -->
+        <div id="gameOverScreen" class="screen">
+            <div class="card winner-card">
+                <div class="winner-title">🎉 БУНКЕР ЗАПОЛНЕН!</div>
+                <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Голосование завершено. Следующие спасатели выжили и заняли места в бункере:
+                </p>
+
+                <ul class="player-list" id="winnersList" style="margin-bottom: 24px;"></ul>
+
+                <button class="btn btn-full" onclick="resetGame()">🔄 Сыграть Снова</button>
+            </div>
+        </div>
+
     </div>
+
+    <script>
+        // PWA Registration & Install Banner
+        let deferredPrompt;
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('Service Worker Registered'))
+                .catch((err) => console.log('SW registration failed: ', err));
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwaInstallBtn').style.display = 'block';
+        });
+
+        document.getElementById('pwaInstallBtn').addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    deferredPrompt = null;
+                    document.getElementById('pwaInstallBtn').style.display = 'none';
+                });
+            }
+        });
+
+        // Game State Variables
+        let players = []; // { id, name, status: 'active'|'eliminated' }
+        let bunkerSeats = 3;
+        let currentRound = 1;
+        let votes = {}; // voterId -> targetId
+        let currentCatastrophe = {};
+
+        const CATASTROPHES = [
+            { title: "🚨 Ядерная Зима", desc: "Радиационный фон зашкаливает. Температура упала до -50°C. В бункере есть еда на 5 лет." },
+            { title: "☄️ Падение Астероида", desc: "Атмосфера заполнена пеплом. Солнца нет. Бункер оснащен гидропоникой и фильтрами воздуха." },
+            { title: "☣️ Глобальная Пандемия", desc: "Неизвестный вирус уничтожил 99% населения. Бункер герметичен и оснащен медлабораторией." },
+            { title: "🌋 Техногенный Коллапс", desc: "ИИ отключил энергосети планеты. В бункере установлен автономный термоядерный реактор." }
+        ];
+
+        function generateCatastrophe() {
+            currentCatastrophe = CATASTROPHES[Math.floor(Math.random() * CATASTROPHES.length)];
+            document.getElementById('catastropheTitle').innerText = currentCatastrophe.title;
+            document.getElementById('catastropheDesc').innerText = currentCatastrophe.desc;
+        }
+
+        function addPlayer() {
+            const input = document.getElementById('playerNameInput');
+            const name = input.value.trim();
+            if (!name) return;
+
+            players.push({
+                id: Date.now() + Math.random(),
+                name: name,
+                status: 'active'
+            });
+
+            input.value = '';
+            renderLobby();
+        }
+
+        function removePlayer(id) {
+            players = players.filter(p => p.id !== id);
+            renderLobby();
+        }
+
+        function renderLobby() {
+            const list = document.getElementById('lobbyPlayerList');
+            list.innerHTML = '';
+            players.forEach(p => {
+                list.innerHTML += `
+                    <li class="player-item">
+                        <span class="player-name">${p.name}</span>
+                        <button class="remove-btn" onclick="removePlayer(${p.id})">✖</button>
+                    </li>
+                `;
+            });
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            bunkerSeats = parseInt(document.getElementById('bunkerSeatsInput').value) || 3;
+            const activeCount = players.filter(p => p.status === 'active').length;
+
+            if (activeCount <= bunkerSeats) {
+                alert(`Для начала игры количество игроков (${activeCount}) должно быть больше мест в бункере (${bunkerSeats})!`);
+                return;
+            }
+
+            currentRound = 1;
+            startRound();
+        }
+
+        function startRound() {
+            votes = {};
+            document.getElementById('roundTitle').innerText = `️ Голосование: Раунд ${currentRound}`;
+            renderGameScreen();
+            showScreen('gameScreen');
+        }
+
+        function renderGameScreen() {
+            const activePlayers = players.filter(p => p.status === 'active');
+            
+            // Populate Voter Select (Only active players who haven't voted yet)
+            const voterSelect = document.getElementById('voterSelect');
+            voterSelect.innerHTML = '<option value="">-- Выберите голосующего --</option>';
+            activePlayers.forEach(p => {
+                if (!votes[p.id]) {
+                    voterSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                }
+            });
+
+            updateTargetSelect();
+            renderActivePlayersList();
+            renderVotedStatus();
+
+            // Enable finish round button if all active players voted
+            const votedCount = Object.keys(votes).length;
+            document.getElementById('finishRoundBtn').disabled = (votedCount < activePlayers.length);
+        }
+
+        function updateTargetSelect() {
+            const voterId = document.getElementById('voterSelect').value;
+            const targetSelect = document.getElementById('targetSelect');
+            targetSelect.innerHTML = '<option value="">-- Выберите кандидата на вылет --</option>';
+
+            const activePlayers = players.filter(p => p.status === 'active');
+            activePlayers.forEach(p => {
+                // Player cannot vote for themselves
+                if (p.id.toString() !== voterId) {
+                    targetSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                }
+            });
+        }
+
+        function castVote() {
+            const voterId = document.getElementById('voterSelect').value;
+            const targetId = document.getElementById('targetSelect').value;
+
+            if (!voterId || !targetId) {
+                alert("Выберите голосующего и того, против кого вы отдаете голос!");
+                return;
+            }
+
+            votes[voterId] = targetId;
+            renderGameScreen();
+        }
+
+        function renderVotedStatus() {
+            const activePlayers = players.filter(p => p.status === 'active');
+            const votedCount = Object.keys(votes).length;
+            document.getElementById('votedStatusList').innerHTML = `
+                Проголосовало: <strong>${votedCount} из ${activePlayers.length}</strong> живых игроков.
+            `;
+        }
+
+        function renderActivePlayersList() {
+            const list = document.getElementById('activePlayerList');
+            list.innerHTML = '';
+            players.forEach(p => {
+                const isEliminated = p.status === 'eliminated';
+                list.innerHTML += `
+                    <li class="player-item ${isEliminated ? 'eliminated' : ''}">
+                        <span class="player-name">${p.name}</span>
+                        <span class="badge ${isEliminated ? 'badge-eliminated' : 'badge-active'}">
+                            ${isEliminated ? 'Выбыл из бункера' : 'В игре'}
+                        </span>
+                    </li>
+                `;
+            });
+        }
+
+        function tallyVotes() {
+            const tally = {};
+            players.filter(p => p.status === 'active').forEach(p => tally[p.id] = 0);
+
+            Object.values(votes).forEach(targetId => {
+                if (tally[targetId] !== undefined) {
+                    tally[targetId]++;
+                }
+            });
+
+            // Find player(s) with max votes
+            let maxVotes = -1;
+            let eliminatedId = null;
+
+            Object.keys(tally).forEach(id => {
+                if (tally[id] > maxVotes) {
+                    maxVotes = tally[id];
+                    eliminatedId = id;
+                }
+            });
+
+            // Mark eliminated
+            const eliminatedPlayer = players.find(p => p.id.toString() === eliminatedId.toString());
+            if (eliminatedPlayer) {
+                eliminatedPlayer.status = 'eliminated';
+            }
+
+            // Display Results
+            document.getElementById('roundEliminatedInfo').innerText = 
+                `🚫 По итогам голосования из бункера выбывает: ${eliminatedPlayer ? eliminatedPlayer.name : 'Никто'}`;
+
+            const resultsList = document.getElementById('voteResultsList');
+            resultsList.innerHTML = '';
+            Object.keys(tally).forEach(id => {
+                const p = players.find(pl => pl.id.toString() === id.toString());
+                resultsList.innerHTML += `
+                    <div class="result-item">
+                        <span>${p.name}</span>
+                        <span><strong>${tally[id]}</strong> голосов</span>
+                    </div>
+                `;
+            });
+
+            showScreen('resultScreen');
+        }
+
+        function nextRound() {
+            const activePlayers = players.filter(p => p.status === 'active');
+            
+            if (activePlayers.length <= bunkerSeats) {
+                showGameOver();
+            } else {
+                currentRound++;
+                startRound();
+            }
+        }
+
+        function showGameOver() {
+            const winnersList = document.getElementById('winnersList');
+            winnersList.innerHTML = '';
+            
+            const activePlayers = players.filter(p => p.status === 'active');
+            activePlayers.forEach(p => {
+                winnersList.innerHTML += `
+                    <li class="player-item" style="border-color: var(--success-green); background: rgba(16, 185, 129, 0.1);">
+                        <span class="player-name" style="color: var(--success-green); font-weight: bold;">🛡️ ${p.name}</span>
+                        <span class="badge badge-active">Спасен в бункере</span>
+                    </li>
+                `;
+            });
+
+            showScreen('gameOverScreen');
+        }
+
+        function resetGame() {
+            players = [];
+            renderLobby();
+            generateCatastrophe();
+            showScreen('setupScreen');
+        }
+
+        // Initialize
+        generateCatastrophe();
+        // Default sample players for quick start
+        players = [
+            { id: 1, name: "Алексей (Инженер)", status: "active" },
+            { id: 2, name: "Мария (Врач)", status: "active" },
+            { id: 3, name: "Дмитрий (Военный)", status: "active" },
+            { id: 4, name: "Елена (Ученый)", status: "active" },
+            { id: 5, name: "Игорь (Повар)", status: "active" }
+        ];
+        renderLobby();
+    </script>
 </body>
 </html>
