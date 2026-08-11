@@ -200,7 +200,7 @@
             overflow-y: auto;
             padding: 16px;
             margin-top: calc(54px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(65px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: calc(55px + env(safe-area-inset-bottom, 12px));
         }
 
         /* Glossy Glassmorphic Cards */
@@ -419,14 +419,14 @@
             display: block;
         }
 
-        /* Glassmorphic Floating Bottom Navigation Dock Positioned at -20px Offset */
+        /* Glassmorphic Floating Bottom Navigation Dock Positioned Further Down (-35px) */
         nav.bottom-nav {
             position: absolute;
-            bottom: calc(-20px + env(safe-area-inset-bottom, 0px));
-            left: 10px;
-            right: 10px;
+            bottom: calc(-35px + env(safe-area-inset-bottom, 0px));
+            left: 8px;
+            right: 8px;
             height: 56px;
-            background: rgba(15, 23, 42, 0.88);
+            background: rgba(15, 23, 42, 0.92);
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid var(--border-color);
@@ -686,7 +686,7 @@
 
         </main>
 
-        <!-- GLASSMORPHIC FLOATING BOTTOM NAVIGATION DOCK WITH -20PX OFFSET -->
+        <!-- GLASSMORPHIC FLOATING BOTTOM NAVIGATION DOCK WITH -35PX OFFSET -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon"><i class="fa-solid fa-users"></i></span>
