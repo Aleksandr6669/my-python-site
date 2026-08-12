@@ -1345,9 +1345,31 @@
                 if (res.ok) {
                     onJoinedRoom();
                 } else {
-                    // Room or player not found, clear session cleanly without auto-joining fake defaults
-                    clearSession();
-                    startRoomListPolling();
+                    // Re-connect seamlessly using existing saved session name
+                    const savedName = localStorage.getItem('bunker_saved_name') || 'Игрок';
+                    const savedAvatar = localStorage.getItem('bunker_saved_avatar') || '🦁';
+
+                    const joinRes = await fetch('/api/join_room', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            room_code: currentRoom,
+                            password: session.password || '',
+                            player_name: savedName,
+                            avatar: savedAvatar
+                        })
+                    });
+
+                    const joinData = await joinRes.json();
+                    if (joinData.success) {
+                        currentPlayerId = joinData.player_id;
+                        isAdmin = joinData.is_admin;
+                        saveActiveSession(currentRoom, currentPlayerId, isAdmin, session.password);
+                        onJoinedRoom();
+                    } else {
+                        clearSession();
+                        startRoomListPolling();
+                    }
                 }
             } catch (e) {
                 clearSession();

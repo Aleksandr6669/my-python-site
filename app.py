@@ -157,7 +157,7 @@ def join_room():
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
-    if room["password"] and room["password"] != password:
+    if room["password"] and password and room["password"] != password:
         return jsonify({"error": "Неверный пароль к бункеру"}), 403
 
     # Reconnect logic: Check if player with same name already exists in room
@@ -366,7 +366,7 @@ def start_game():
 
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     if len(active_players) <= room["seats"]:
-        return jsonify({"error": f"Количество участников ({len(active_players)}) должно быть больше мест в бункеере ({room['seats']})"}), 400
+        return jsonify({"error": f"Количество участников ({len(active_players)}) должно быть больше мест в бункере ({room['seats']})"}), 400
 
     room["status"] = "voting"
     room["round"] = 1
