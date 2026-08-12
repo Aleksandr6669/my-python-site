@@ -937,7 +937,30 @@
         let previousPlayersMap = new Map();
         let isInitialStatusLoad = true;
 
-        // LocalStorage is strictly for input pre-filling on the login screen!
+        // Active Session Storage Helpers (Persists unless user clicks "Выйти из Бункера")
+        function saveActiveSession(roomCode, playerId, adminFlag, password = '') {
+            localStorage.setItem('bunker_active_session', JSON.stringify({
+                roomCode: roomCode,
+                playerId: playerId,
+                isAdmin: adminFlag,
+                password: password
+            }));
+        }
+
+        function clearSession() {
+            localStorage.removeItem('bunker_active_session');
+            currentRoom = null;
+            currentPlayerId = null;
+            isAdmin = false;
+            previousEliminatedStatus = false;
+            hasFiredWinnerConfetti = false;
+            isUserSettingsAvatarDirty = false;
+            previousPlayersMap.clear();
+            isInitialStatusLoad = true;
+            if (pollTimer) clearInterval(pollTimer);
+        }
+
+        // LocalStorage for pre-filling login form
         function savePlayerProfileLocally(name, avatar) {
             if (name) localStorage.setItem('bunker_saved_name', name.trim().substring(0, 16));
             if (avatar) localStorage.setItem('bunker_saved_avatar', avatar);
@@ -1002,18 +1025,6 @@
             el.classList.add('selected');
             selectedSettingsAvatar = avatar;
             isUserSettingsAvatarDirty = true; // Mark as manually selected by user
-        }
-
-        function clearSession() {
-            currentRoom = null;
-            currentPlayerId = null;
-            isAdmin = false;
-            previousEliminatedStatus = false;
-            hasFiredWinnerConfetti = false;
-            isUserSettingsAvatarDirty = false;
-            previousPlayersMap.clear();
-            isInitialStatusLoad = true;
-            if (pollTimer) clearInterval(pollTimer);
         }
 
         // Animated Tab Switching + Immediate Data Fetch
@@ -1148,6 +1159,7 @@
             currentPlayerId = data.player_id;
             isAdmin = true;
 
+            saveActiveSession(currentRoom, currentPlayerId, isAdmin, password);
             onJoinedRoom(data.room_data);
             Toast.fire({ icon: 'success', title: 'Отбор в бункер успешно создан!' });
         }
@@ -1175,6 +1187,7 @@
             currentPlayerId = data.player_id;
             isAdmin = data.is_admin;
 
+            saveActiveSession(currentRoom, currentPlayerId, isAdmin, password);
             onJoinedRoom();
             Toast.fire({ icon: 'success', title: 'Успешный вход в отбор!' });
         }
@@ -1312,11 +1325,56 @@
             startRoomListPolling();
         }
 
-        function restoreSession() {
+        async function restoreSession() {
             restoreTheme();
             restoreSavedPlayerName();
-            // Start main rooms list view with live background polling
-            startRoomListPolling();
+            
+            const saved = localStorage.getItem('bunker_active_session');
+            if (!saved) {
+                startRoomListPolling();
+                return;
+            }
+
+            try {
+                const session = JSON.parse(saved);
+                currentRoom = session.roomCode;
+                currentPlayerId = session.playerId;
+                isAdmin = session.isAdmin;
+
+                const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
+                if (res.ok) {
+                    onJoinedRoom();
+                } else {
+                    // Re-login / auto-reconnect if container restarted
+                    const savedName = localStorage.getItem('bunker_saved_name') || 'Игрок';
+                    const savedAvatar = localStorage.getItem('bunker_saved_avatar') || '🦁';
+
+                    const joinRes = await fetch('/api/join_room', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            room_code: currentRoom,
+                            password: session.password || '',
+                            player_name: savedName,
+                            avatar: savedAvatar
+                        })
+                    });
+
+                    const joinData = await joinRes.json();
+                    if (joinData.success) {
+                        currentPlayerId = joinData.player_id;
+                        isAdmin = joinData.is_admin;
+                        saveActiveSession(currentRoom, currentPlayerId, isAdmin, session.password);
+                        onJoinedRoom();
+                    } else {
+                        clearSession();
+                        startRoomListPolling();
+                    }
+                }
+            } catch (e) {
+                clearSession();
+                startRoomListPolling();
+            }
         }
 
         // Silent 1-Second Background Polling + Serverless Re-Join Auto-Healing
@@ -1337,16 +1395,29 @@
                     // Auto-heal on serverless container cold restart:
                     const savedName = localStorage.getItem('bunker_saved_name') || 'Игрок';
                     const savedAvatar = localStorage.getItem('bunker_saved_avatar') || '🦁';
-                    await fetch('/api/join_room', {
+                    const savedSessionStr = localStorage.getItem('bunker_active_session');
+                    let passwordVal = '';
+                    if (savedSessionStr) {
+                        try { passwordVal = JSON.parse(savedSessionStr).password || ''; } catch(e){}
+                    }
+
+                    const joinRes = await fetch('/api/join_room', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
                             room_code: currentRoom,
-                            password: '',
+                            password: passwordVal,
                             player_name: savedName,
                             avatar: savedAvatar
                         })
                     });
+
+                    const joinData = await joinRes.json();
+                    if (joinData.success) {
+                        currentPlayerId = joinData.player_id;
+                        isAdmin = joinData.is_admin;
+                        saveActiveSession(currentRoom, currentPlayerId, isAdmin, passwordVal);
+                    }
                     return;
                 }
 
