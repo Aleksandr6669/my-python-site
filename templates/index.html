@@ -488,7 +488,7 @@
             display: block;
         }
 
-        /* UNIVERSAL FIXED BOTTOM NAVIGATION DOCK (FLUSH ANCHORED ON IOS & ANDROID) */
+        /* PREMIUM GLASSMORPHIC FLOATING BOTTOM NAVIGATION DOCK */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
@@ -496,53 +496,83 @@
             transform: translateX(-50%);
             width: 100%;
             max-width: 480px;
-            height: calc(64px + env(safe-area-inset-bottom, 0px));
+            height: calc(66px + env(safe-area-inset-bottom, 0px));
             padding-bottom: env(safe-area-inset-bottom, 0px);
-            padding-top: 6px;
-            padding-left: 12px;
-            padding-right: 12px;
-            background: #0f172a;
-            border-top: 1px solid var(--border-color);
+            padding-top: 5px;
+            padding-left: 10px;
+            padding-right: 10px;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(11, 15, 25, 0.96) 100%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
             display: flex;
-            justify-content: space-around;
+            justify-content: space-evenly;
             align-items: center;
             z-index: 1000;
-            box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.7), var(--border-glow);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 -10px 32px rgba(0, 0, 0, 0.75);
         }
 
         .nav-item {
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: var(--text-muted);
-            font-size: 0.74rem;
+            color: #94a3b8;
+            font-size: 0.72rem;
             font-weight: 600;
+            letter-spacing: 0.3px;
             cursor: pointer;
-            gap: 4px;
+            gap: 3px;
             width: 31%;
-            height: 50px;
-            border-radius: 14px;
-            padding: 6px 12px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 52px;
+            border-radius: 16px;
+            padding: 4px 10px 6px 10px;
+            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nav-item:active {
+            transform: scale(0.95);
         }
 
         .nav-item.active {
-            color: var(--danger-red);
-            background: rgba(239, 68, 68, 0.16);
-            border: 1px solid rgba(239, 68, 68, 0.35);
-            box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.22) 0%, rgba(245, 158, 11, 0.18) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .nav-item .icon {
             font-size: 1.25rem;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #94a3b8;
+            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .nav-item.active .icon {
-            transform: scale(1.1);
+            transform: translateY(-2px) scale(1.16);
             color: var(--danger-red);
-            filter: drop-shadow(0 0 8px var(--danger-red));
+            filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.8));
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--danger-red);
+            box-shadow: 0 0 8px var(--danger-red);
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.25s ease;
+        }
+
+        .nav-item.active::after {
+            opacity: 1;
+            transform: scale(1);
         }
 
         .room-item-card {
@@ -910,6 +940,16 @@
                         <div class="card-title"><i class="fa-solid fa-gear"></i> Обслуживание Бункера</div>
                         
                         <div id="adminControls">
+                            <div class="form-group">
+                                <label style="color: var(--accent-amber); font-weight: 700;">Текущий Пароль Бункера:</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="adminCurrentPasswordDisplay" readonly placeholder="Загрузка пароля..." style="background: rgba(245, 158, 11, 0.08); border: 1px solid var(--accent-amber); font-weight: 700; color: white;">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('adminCurrentPasswordDisplay', this)" title="Показать/скрыть текущий пароль">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label>Мест в бункере (Победителей):</label>
                                 <input type="number" id="adminSeatsInput" value="3" min="1" max="15">
@@ -1314,8 +1354,13 @@
             const code = document.getElementById('createRoomCode').value.trim();
             const password = document.getElementById('createPassword').value.trim();
             const adminName = document.getElementById('createAdminName').value.trim();
-            const seats = document.getElementById('createSeats').value;
-            const lifetime = document.getElementById('createLifetime').value;
+            const seats = document.getElementById('createSeats').value.trim();
+            const lifetime = document.getElementById('createLifetime').value.trim();
+
+            if (!code || !password || !adminName || !seats || !lifetime) {
+                Toast.fire({ icon: 'warning', title: 'Все поля обязательны для заполнения!' });
+                return;
+            }
 
             if (adminName) savePlayerProfileLocally(adminName, selectedAvatar);
 
@@ -1702,6 +1747,10 @@
                             opt.classList.remove('selected');
                         }
                     });
+                    if (data.password) {
+                        const passDisplay = document.getElementById('adminCurrentPasswordDisplay');
+                        if (passDisplay) passDisplay.value = data.password;
+                    }
                 }
             }
 

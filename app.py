@@ -75,8 +75,6 @@ def service_worker():
 
 @app.route("/api/list_rooms", methods=["GET"])
 def list_rooms():
-    global ROOMS
-    ROOMS = load_rooms()
     cleanup_expired_rooms()
     active_rooms = []
     for code, room in ROOMS.items():
@@ -94,20 +92,21 @@ def list_rooms():
 
 @app.route("/api/create_room", methods=["POST"])
 def create_room():
-    global ROOMS
-    ROOMS = load_rooms()
     cleanup_expired_rooms()
     data = request.json or {}
     raw_code = data.get("room_code", "").strip()
     room_code = unquote(raw_code).upper()
     password = data.get("password", "").strip()
-    seats = int(data.get("seats", 3))
-    lifetime_hours = float(data.get("lifetime_hours", 2.0))
-    admin_name = data.get("admin_name", "Игрок 1").strip()[:16]
+    seats = data.get("seats")
+    lifetime_hours = data.get("lifetime_hours")
+    admin_name = data.get("admin_name", "").strip()[:16]
     avatar = data.get("avatar", "🦁")
 
-    if not room_code or not password:
-        return jsonify({"error": "Укажите код бункера и пароль"}), 400
+    if not room_code or not password or not admin_name or seats is None or lifetime_hours is None:
+        return jsonify({"error": "Все поля обязательны для заполнения!"}), 400
+
+    seats = int(seats)
+    lifetime_hours = float(lifetime_hours)
 
     created_at = time.time()
     expires_at = created_at + (lifetime_hours * 3600)
@@ -154,8 +153,6 @@ def create_room():
 
 @app.route("/api/join_room", methods=["POST"])
 def join_room():
-    global ROOMS
-    ROOMS = load_rooms()
     cleanup_expired_rooms()
     data = request.json or {}
     raw_code = data.get("room_code", "").strip()
@@ -215,8 +212,6 @@ def join_room():
 
 @app.route("/api/room_status/<room_code>", methods=["GET"])
 def room_status(room_code):
-    global ROOMS
-    ROOMS = load_rooms()
     cleanup_expired_rooms()
     room_code = unquote(room_code).upper()
     player_id = request.args.get("player_id")
@@ -249,7 +244,7 @@ def room_status(room_code):
             for p in active_players
         ]
 
-    return jsonify({
+    res_data = {
         "code": room["code"],
         "seats": room["seats"],
         "status": room["status"],
@@ -262,12 +257,15 @@ def room_status(room_code):
         "round_votes_summary": room["round_votes_summary"],
         "voting_start_time": room.get("voting_start_time"),
         "survivors": survivors
-    })
+    }
+
+    if player_id == room["admin_id"]:
+        res_data["password"] = room.get("password", "")
+
+    return jsonify(res_data)
 
 @app.route("/api/update_profile", methods=["POST"])
 def update_profile():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
@@ -293,8 +291,6 @@ def update_profile():
 
 @app.route("/api/update_room_settings", methods=["POST"])
 def update_room_settings():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     admin_id = data.get("admin_id")
@@ -326,8 +322,6 @@ def update_room_settings():
 
 @app.route("/api/change_password", methods=["POST"])
 def change_password():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     admin_id = data.get("admin_id")
@@ -349,8 +343,6 @@ def change_password():
 
 @app.route("/api/leave_room", methods=["POST"])
 def leave_room_api():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
@@ -363,8 +355,6 @@ def leave_room_api():
 
 @app.route("/api/delete_room", methods=["POST"])
 def delete_room():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     admin_id = data.get("admin_id")
@@ -382,8 +372,6 @@ def delete_room():
 
 @app.route("/api/start_game", methods=["POST"])
 def start_game():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
@@ -414,8 +402,6 @@ def start_game():
 
 @app.route("/api/cast_vote", methods=["POST"])
 def cast_vote():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     voter_id = data.get("voter_id")
@@ -445,8 +431,6 @@ def cast_vote():
 
 @app.route("/api/tally_votes", methods=["POST"])
 def tally_votes():
-    global ROOMS
-    ROOMS = load_rooms()
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
