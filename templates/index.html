@@ -452,7 +452,7 @@
             display: block;
         }
 
-        /* UNIVERSAL FIXED BOTTOM NAVIGATION BAR (FLUSH ANCHORED ON IOS & ANDROID) */
+        /* UNIVERSAL FIXED BOTTOM NAVIGATION DOCK (FLUSH ANCHORED ON IOS & ANDROID) */
         nav.bottom-nav {
             position: fixed;
             bottom: 0;
@@ -754,11 +754,23 @@
                         <button class="btn btn-outline" onclick="leaveRoom()"><i class="fa-solid fa-right-from-bracket"></i> Выйти из Бункера</button>
                     </div>
 
-                    <!-- РАЗДЕЛ: НАСТРОЙКИ ПАРОЛЯ И УДАЛЕНИЯ БУНКЕРА (ТОЛЬКО ДЛЯ АДМИНА) -->
+                    <!-- РАЗДЕЛ: НАСТРОЙКИ ПАРОЛЯ, МЕСТ И УДАЛЕНИЯ БУНКЕРА (ТОЛЬКО ДЛЯ АДМИНА) -->
                     <div id="adminRoomSettingsCard" class="card" style="margin-top: 14px; display: none;">
                         <div class="card-title"><i class="fa-solid fa-gear"></i> Обслуживание Бункера</div>
                         
                         <div id="adminControls">
+                            <div class="form-group">
+                                <label>Мест в бункере (Победителей):</label>
+                                <input type="number" id="adminSeatsInput" value="3" min="1" max="15">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Срок жизни бункера (часов):</label>
+                                <input type="number" id="adminLifetimeInput" value="2" min="1" max="24">
+                            </div>
+
+                            <button class="btn btn-amber" style="margin-bottom: 14px;" onclick="adminUpdateRoomSettings()"><i class="fa-solid fa-floppy-disk"></i> Сохранить Параметры Бункера</button>
+
                             <div class="form-group">
                                 <label>Новый пароль бункера:</label>
                                 <div class="password-wrapper">
@@ -780,7 +792,7 @@
 
         </main>
 
-        <!-- UNIVERSAL FIXED BOTTOM NAVIGATION DOCK (FLUSH ANCHORED ON IOS & ANDROID) -->
+        <!-- BALANCED GLASSMORPHIC FLOATING BOTTOM NAVIGATION DOCK -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon"><i class="fa-solid fa-users"></i></span>
@@ -1207,6 +1219,31 @@
             fetchRoomStatus(true);
         }
 
+        async function adminUpdateRoomSettings() {
+            const newSeats = document.getElementById('adminSeatsInput').value;
+            const newLifetime = document.getElementById('adminLifetimeInput').value;
+
+            const res = await fetch('/api/update_room_settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    room_code: currentRoom,
+                    admin_id: currentPlayerId,
+                    seats: newSeats,
+                    lifetime_hours: newLifetime
+                })
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                Toast.fire({ icon: 'error', title: data.error });
+                return;
+            }
+
+            Toast.fire({ icon: 'success', title: 'Параметры бункера сохранены!' });
+            fetchRoomStatus();
+        }
+
         async function adminChangePassword() {
             const newPass = document.getElementById('adminNewPasswordInput').value.trim();
             if (!newPass) {
@@ -1364,6 +1401,13 @@
             // Show/hide admin control cards
             document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
             document.getElementById('adminRoomSettingsCard').style.display = isAdmin ? 'block' : 'none';
+
+            if (isAdmin) {
+                const seatsInput = document.getElementById('adminSeatsInput');
+                if (seatsInput && document.activeElement !== seatsInput) {
+                    seatsInput.value = data.seats;
+                }
+            }
 
             // DETECT NEW PLAYERS JOINING (Trigger Global Toast on ALL Tabs!)
             const currentActivePlayers = data.players.filter(p => p.status === 'active');
@@ -1563,6 +1607,17 @@
             else {
                 fetchRoomStatus();
                 switchTab('panelVote');
+                
+                // Auto-advance to next round after 3.5 seconds if game is still going
+                setTimeout(async () => {
+                    if (currentRoom && isAdmin) {
+                        const statusRes = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
+                        const statusData = await statusRes.json();
+                        if (statusData.status === 'round_results') {
+                            adminNextRound();
+                        }
+                    }
+                }, 3500);
             }
         }
 

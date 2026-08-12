@@ -283,6 +283,39 @@ def update_profile():
     save_rooms()
     return jsonify({"success": True})
 
+@app.route("/api/update_room_settings", methods=["POST"])
+def update_room_settings():
+    global ROOMS
+    ROOMS = load_rooms()
+    data = request.json or {}
+    room_code = unquote(data.get("room_code", "")).upper()
+    admin_id = data.get("admin_id")
+    new_seats = data.get("seats")
+    new_lifetime = data.get("lifetime_hours")
+
+    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+        return jsonify({"error": "Бункер не найден"}), 404
+
+    room = ROOMS[room_code]
+    if room["admin_id"] != admin_id:
+        return jsonify({"error": "Только создатель бункера может изменять настройки"}), 403
+
+    if new_seats is not None:
+        try:
+            room["seats"] = int(new_seats)
+        except:
+            pass
+
+    if new_lifetime is not None:
+        try:
+            lifetime_hours = float(new_lifetime)
+            room["expires_at"] = room["created_at"] + (lifetime_hours * 3600)
+        except:
+            pass
+
+    save_rooms()
+    return jsonify({"success": True})
+
 @app.route("/api/change_password", methods=["POST"])
 def change_password():
     global ROOMS
