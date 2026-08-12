@@ -228,7 +228,7 @@
             font-weight: 800;
         }
 
-        /* Form Inputs */
+        /* Form Inputs & Password Wrapper */
         .form-group {
             margin-bottom: 14px;
         }
@@ -239,6 +239,11 @@
             color: var(--text-muted);
             margin-bottom: 6px;
             font-weight: 600;
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
         }
 
         input[type="text"], input[type="password"], input[type="number"], select {
@@ -253,6 +258,29 @@
             font-weight: 500;
             outline: none;
             transition: all 0.25s ease;
+        }
+
+        .password-wrapper input {
+            padding-right: 46px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 6px;
+            z-index: 10;
+            transition: color 0.2s ease;
+        }
+
+        .password-toggle-btn:hover {
+            color: white;
         }
 
         input:focus, select:focus {
@@ -399,15 +427,6 @@
             background: rgba(239, 68, 68, 0.2);
             color: var(--danger-red);
             border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .kick-btn {
-            background: none;
-            border: none;
-            color: var(--danger-red);
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 4px;
         }
 
         /* Animated Tab Content Control */
@@ -573,7 +592,12 @@
                         </div>
                         <div class="form-group">
                             <label>Пароль от бункера:</label>
-                            <input type="password" id="joinPassword" placeholder="Введите пароль" autocomplete="new-password" autocorrect="off">
+                            <div class="password-wrapper">
+                                <input type="password" id="joinPassword" placeholder="Введите пароль" autocomplete="new-password" autocorrect="off">
+                                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('joinPassword', this)" title="Показать/скрыть пароль">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
@@ -590,7 +614,12 @@
                         </div>
                         <div class="form-group">
                             <label>Придумайте Пароль:</label>
-                            <input type="password" id="createPassword" placeholder="Пароль для игроков" autocomplete="new-password" autocorrect="off">
+                            <div class="password-wrapper">
+                                <input type="password" id="createPassword" placeholder="Пароль для игроков" autocomplete="new-password" autocorrect="off">
+                                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('createPassword', this)" title="Показать/скрыть пароль">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
@@ -706,7 +735,12 @@
                             <!-- СМЕНА ПАРОЛЯ ДЛЯ АДМИНА -->
                             <div class="form-group" style="margin-top: 14px;">
                                 <label>Новый пароль бункера:</label>
-                                <input type="password" id="adminNewPasswordInput" placeholder="Придумайте новый пароль" autocomplete="new-password" autocorrect="off">
+                                <div class="password-wrapper">
+                                    <input type="password" id="adminNewPasswordInput" placeholder="Придумайте новый пароль" autocomplete="new-password" autocorrect="off">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('adminNewPasswordInput', this)" title="Показать/скрыть пароль">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
                             <button class="btn btn-amber" style="margin-bottom: 14px;" onclick="adminChangePassword()"><i class="fa-solid fa-key"></i> Сменить Пароль</button>
 
@@ -752,6 +786,26 @@
             background: '#1f2937',
             color: '#fff'
         });
+
+        // Toggle Password Visibility (Eye Icon)
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        }
 
         // Custom Theme Selection Modal
         function openThemeModal() {
@@ -850,8 +904,15 @@
             }
         }
 
+        function savePlayerProfileLocally(name, avatar) {
+            if (name) localStorage.setItem('bunker_saved_name', name.trim());
+            if (avatar) localStorage.setItem('bunker_saved_avatar', avatar);
+        }
+
         function restoreSavedPlayerName() {
             const savedName = localStorage.getItem('bunker_saved_name') || '';
+            const savedAvatar = localStorage.getItem('bunker_saved_avatar') || '🦁';
+
             if (savedName) {
                 document.getElementById('joinPlayerName').value = savedName;
                 document.getElementById('createAdminName').value = savedName;
@@ -859,6 +920,29 @@
                 if (document.activeElement !== settingsInput) {
                     settingsInput.value = savedName;
                 }
+            }
+
+            if (savedAvatar) {
+                selectedAvatar = savedAvatar;
+                selectedSettingsAvatar = savedAvatar;
+
+                // Sync login avatar grid
+                document.querySelectorAll('#avatarPicker .avatar-option').forEach(opt => {
+                    if (opt.innerText.trim() === savedAvatar) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+
+                // Sync settings avatar grid
+                document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => {
+                    if (opt.innerText.trim() === savedAvatar) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
             }
         }
 
@@ -876,6 +960,7 @@
             document.querySelectorAll('#avatarPicker .avatar-option').forEach(opt => opt.classList.remove('selected'));
             el.classList.add('selected');
             selectedAvatar = avatar;
+            savePlayerProfileLocally(null, avatar);
         }
 
         function selectSettingsAvatar(el, avatar) {
@@ -949,7 +1034,7 @@
                         <div class="room-item-card" onclick="openJoinStep('${r.code}')">
                             <div>
                                 <strong style="color: var(--danger-red); font-size: 1rem;">Код: ${displayCode}</strong>
-                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Кандидатов: ${r.active_count} | Мест в бункере: ${r.seats}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Кандидатов: ${r.active_count} | Мест в бункеере: ${r.seats}</div>
                             </div>
                             <span class="badge badge-active">Войти ➔</span>
                         </div>
@@ -1005,7 +1090,7 @@
             const seats = document.getElementById('createSeats').value;
             const lifetime = document.getElementById('createLifetime').value;
 
-            if (adminName) savePlayerNameLocally(adminName);
+            if (adminName) savePlayerProfileLocally(adminName, selectedAvatar);
 
             const res = await fetch('/api/create_room', {
                 method: 'POST',
@@ -1033,7 +1118,7 @@
             const password = document.getElementById('joinPassword').value.trim();
             const playerName = document.getElementById('joinPlayerName').value.trim();
 
-            if (playerName) savePlayerNameLocally(playerName);
+            if (playerName) savePlayerProfileLocally(playerName, selectedAvatar);
 
             const res = await fetch('/api/join_room', {
                 method: 'POST',
@@ -1063,7 +1148,7 @@
                 return;
             }
 
-            savePlayerNameLocally(newName);
+            savePlayerProfileLocally(newName, selectedSettingsAvatar);
 
             const res = await fetch('/api/update_profile', {
                 method: 'POST',
