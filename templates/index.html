@@ -937,6 +937,7 @@
         let previousPlayersMap = new Map();
         let isInitialStatusLoad = true;
 
+        // LocalStorage is strictly for input pre-filling on the login screen!
         function savePlayerProfileLocally(name, avatar) {
             if (name) localStorage.setItem('bunker_saved_name', name.trim().substring(0, 16));
             if (avatar) localStorage.setItem('bunker_saved_avatar', avatar);
@@ -1003,16 +1004,7 @@
             isUserSettingsAvatarDirty = true; // Mark as manually selected by user
         }
 
-        function saveSession(roomCode, playerId, adminFlag) {
-            localStorage.setItem('bunker_session', JSON.stringify({
-                roomCode: roomCode,
-                playerId: playerId,
-                isAdmin: adminFlag
-            }));
-        }
-
         function clearSession() {
-            localStorage.removeItem('bunker_session');
             currentRoom = null;
             currentPlayerId = null;
             isAdmin = false;
@@ -1156,7 +1148,6 @@
             currentPlayerId = data.player_id;
             isAdmin = true;
 
-            saveSession(currentRoom, currentPlayerId, isAdmin);
             onJoinedRoom(data.room_data);
             Toast.fire({ icon: 'success', title: 'Отбор в бункер успешно создан!' });
         }
@@ -1184,7 +1175,6 @@
             currentPlayerId = data.player_id;
             isAdmin = data.is_admin;
 
-            saveSession(currentRoom, currentPlayerId, isAdmin);
             onJoinedRoom();
             Toast.fire({ icon: 'success', title: 'Успешный вход в отбор!' });
         }
@@ -1322,32 +1312,11 @@
             startRoomListPolling();
         }
 
-        async function restoreSession() {
+        function restoreSession() {
             restoreTheme();
             restoreSavedPlayerName();
-            const saved = localStorage.getItem('bunker_session');
-            if (!saved) {
-                startRoomListPolling();
-                return;
-            }
-
-            try {
-                const session = JSON.parse(saved);
-                currentRoom = session.roomCode;
-                currentPlayerId = session.playerId;
-                isAdmin = session.isAdmin;
-
-                const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
-                if (res.ok) {
-                    onJoinedRoom();
-                } else {
-                    clearSession();
-                    startRoomListPolling();
-                }
-            } catch (e) {
-                clearSession();
-                startRoomListPolling();
-            }
+            // Start main rooms list view with live background polling
+            startRoomListPolling();
         }
 
         // Silent 1-Second Background Polling + Serverless Re-Join Auto-Healing
