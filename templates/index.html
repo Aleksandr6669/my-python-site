@@ -1345,31 +1345,9 @@
                 if (res.ok) {
                     onJoinedRoom();
                 } else {
-                    // Re-login / auto-reconnect if container restarted
-                    const savedName = localStorage.getItem('bunker_saved_name') || 'Игрок';
-                    const savedAvatar = localStorage.getItem('bunker_saved_avatar') || '🦁';
-
-                    const joinRes = await fetch('/api/join_room', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            room_code: currentRoom,
-                            password: session.password || '',
-                            player_name: savedName,
-                            avatar: savedAvatar
-                        })
-                    });
-
-                    const joinData = await joinRes.json();
-                    if (joinData.success) {
-                        currentPlayerId = joinData.player_id;
-                        isAdmin = joinData.is_admin;
-                        saveActiveSession(currentRoom, currentPlayerId, isAdmin, session.password);
-                        onJoinedRoom();
-                    } else {
-                        clearSession();
-                        startRoomListPolling();
-                    }
+                    // Room or player not found, clear session cleanly without auto-joining fake defaults
+                    clearSession();
+                    startRoomListPolling();
                 }
             } catch (e) {
                 clearSession();
@@ -1377,7 +1355,7 @@
             }
         }
 
-        // Silent 1-Second Background Polling + Serverless Re-Join Auto-Healing
+        // Silent 1-Second Background Polling (NO auto-reconnect fallback that creates fake players!)
         async function fetchRoomStatus(forcePopulateSettings = false) {
             if (!currentRoom) return;
 
@@ -1388,36 +1366,10 @@
                 if (res.status === 404) {
                     if (data.code === "ROOM_DELETED") {
                         Toast.fire({ icon: 'warning', title: 'Бункер был удален организатором!' });
-                        leaveRoom();
-                        return;
+                    } else {
+                        Toast.fire({ icon: 'info', title: 'Сессия завершена или бункер закрыт' });
                     }
-
-                    // Auto-heal on serverless container cold restart:
-                    const savedName = localStorage.getItem('bunker_saved_name') || 'Игрок';
-                    const savedAvatar = localStorage.getItem('bunker_saved_avatar') || '🦁';
-                    const savedSessionStr = localStorage.getItem('bunker_active_session');
-                    let passwordVal = '';
-                    if (savedSessionStr) {
-                        try { passwordVal = JSON.parse(savedSessionStr).password || ''; } catch(e){}
-                    }
-
-                    const joinRes = await fetch('/api/join_room', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            room_code: currentRoom,
-                            password: passwordVal,
-                            player_name: savedName,
-                            avatar: savedAvatar
-                        })
-                    });
-
-                    const joinData = await joinRes.json();
-                    if (joinData.success) {
-                        currentPlayerId = joinData.player_id;
-                        isAdmin = joinData.is_admin;
-                        saveActiveSession(currentRoom, currentPlayerId, isAdmin, passwordVal);
-                    }
+                    leaveRoom();
                     return;
                 }
 
