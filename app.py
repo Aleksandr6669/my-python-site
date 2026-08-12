@@ -91,7 +91,7 @@ def create_room():
     password = data.get("password", "").strip()
     seats = int(data.get("seats", 3))
     lifetime_hours = float(data.get("lifetime_hours", 2.0))
-    admin_name = data.get("admin_name", "Игрок 1").strip()
+    admin_name = data.get("admin_name", "Игрок 1").strip()[:16]
     avatar = data.get("avatar", "🦁")
 
     if not room_code or not password:
@@ -147,7 +147,7 @@ def join_room():
     raw_code = data.get("room_code", "").strip()
     room_code = unquote(raw_code).upper()
     password = data.get("password", "").strip()
-    player_name = data.get("player_name", "").strip()
+    player_name = data.get("player_name", "").strip()[:16]
     avatar = data.get("avatar", "🦊")
 
     if not room_code or not player_name:
@@ -183,7 +183,7 @@ def join_room():
         })
 
     room = ROOMS[room_code]
-    if room["password"] and room["password"] != password:
+    if room["password"] and password and room["password"] != password:
         return jsonify({"error": "Неверный пароль к бункеру"}), 403
 
     # Reconnect logic: Check if player with same name already exists in room
@@ -195,6 +195,7 @@ def join_room():
 
     if existing_player:
         player_id = existing_player["id"]
+        existing_player["name"] = player_name
         existing_player["avatar"] = avatar
         is_admin = (player_id == room["admin_id"])
         save_rooms()
@@ -235,41 +236,10 @@ def room_status(room_code):
     if room_code in ROOMS and ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер был удален организатором", "code": "ROOM_DELETED"}), 404
 
-    # Auto-recreate room on serverless cold starts if missing
     if room_code not in ROOMS:
-        created_at = time.time()
-        expires_at = created_at + (2 * 3600)
-        admin_id = player_id if player_id else str(uuid.uuid4())
-        ROOMS[room_code] = {
-            "code": room_code,
-            "password": "",
-            "seats": 3,
-            "status": "lobby",
-            "round": 1,
-            "created_at": created_at,
-            "expires_at": expires_at,
-            "deleted": False,
-            "admin_id": admin_id,
-            "players": {
-                admin_id: {"id": admin_id, "name": "Игрок", "avatar": "👤", "status": "active", "voted_for": None}
-            },
-            "last_eliminated": None,
-            "round_votes_summary": {}
-        }
-        save_rooms()
+        return jsonify({"error": "Бункер не найден", "code": "ROOM_NOT_FOUND"}), 404
 
     room = ROOMS[room_code]
-
-    # Auto-restore player if missing
-    if player_id and player_id not in room["players"]:
-        room["players"][player_id] = {
-            "id": player_id,
-            "name": "Игрок",
-            "avatar": "👤",
-            "status": "active",
-            "voted_for": None
-        }
-        save_rooms()
 
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     voted_count = len([p for p in active_players if p["voted_for"] is not None])
@@ -294,7 +264,7 @@ def update_profile():
     data = request.json or {}
     room_code = unquote(data.get("room_code", "")).upper()
     player_id = data.get("player_id")
-    new_name = data.get("name", "").strip()
+    new_name = data.get("name", "").strip()[:16]
     new_avatar = data.get("avatar", "").strip()
 
     if room_code not in ROOMS or ROOMS[room_code].get("deleted"):

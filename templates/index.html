@@ -338,11 +338,14 @@
             white-space: nowrap;
         }
 
+        /* COMPACT VOTE ROW BUTTON & BADGE STYLE FIXES */
         .btn-vote-row {
-            height: 40px;
-            padding: 0 14px;
-            font-size: 0.85rem;
+            height: 36px;
+            padding: 0 10px;
+            font-size: 0.78rem;
             width: auto;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .btn:active {
@@ -383,7 +386,9 @@
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 10px 12px;
+            gap: 10px;
+            min-width: 0;
             transition: all 0.2s ease;
         }
 
@@ -396,25 +401,34 @@
         .player-info {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
         }
 
         .player-avatar {
-            font-size: 1.3rem;
+            font-size: 1.25rem;
+            flex-shrink: 0;
         }
 
         .player-name {
             font-weight: 600;
-            font-size: 0.98rem;
+            font-size: 0.88rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
         }
 
         .badge {
-            font-size: 0.7rem;
-            padding: 4px 10px;
-            border-radius: 10px;
+            font-size: 0.68rem;
+            padding: 5px 8px;
+            border-radius: 8px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .badge-active {
@@ -601,7 +615,7 @@
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
-                            <input type="text" id="joinPlayerName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerProfileLocally(this.value, selectedAvatar)">
+                            <input type="text" id="joinPlayerName" placeholder="Ваше имя" maxlength="16" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerProfileLocally(this.value, selectedAvatar)">
                         </div>
                         <button class="btn" onclick="submitJoinRoom()"><i class="fa-solid fa-right-to-bracket"></i> Войти в Бункер</button>
                     </div>
@@ -623,7 +637,7 @@
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
-                            <input type="text" id="createAdminName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerProfileLocally(this.value, selectedAvatar)">
+                            <input type="text" id="createAdminName" placeholder="Ваше имя" maxlength="16" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerProfileLocally(this.value, selectedAvatar)">
                         </div>
                         <div class="form-group">
                             <label>Мест в бункере (Победителей):</label>
@@ -728,7 +742,7 @@
 
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
-                            <input type="text" id="settingsPlayerNameInput" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false">
+                            <input type="text" id="settingsPlayerNameInput" placeholder="Ваше имя" maxlength="16" autocomplete="off" autocorrect="off" spellcheck="false">
                         </div>
 
                         <button class="btn btn-amber" style="margin-bottom: 12px;" onclick="submitUpdateProfile()"><i class="fa-solid fa-floppy-disk"></i> Сохранить Настройки</button>
@@ -906,7 +920,7 @@
         let isInitialStatusLoad = true;
 
         function savePlayerProfileLocally(name, avatar) {
-            if (name) localStorage.setItem('bunker_saved_name', name.trim());
+            if (name) localStorage.setItem('bunker_saved_name', name.trim().substring(0, 16));
             if (avatar) localStorage.setItem('bunker_saved_avatar', avatar);
         }
 
@@ -1292,7 +1306,7 @@
             }
         }
 
-        // Silent 1-Second Background Polling
+        // Silent 1-Second Background Polling + Serverless Re-Join Auto-Healing
         async function fetchRoomStatus(forcePopulateSettings = false) {
             if (!currentRoom) return;
 
@@ -1300,9 +1314,26 @@
                 const res = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
                 const data = await res.json();
 
-                if (res.status === 404 && data.code === "ROOM_DELETED") {
-                    Toast.fire({ icon: 'warning', title: 'Бункер был удален организатором!' });
-                    leaveRoom();
+                if (res.status === 404) {
+                    if (data.code === "ROOM_DELETED") {
+                        Toast.fire({ icon: 'warning', title: 'Бункер был удален организатором!' });
+                        leaveRoom();
+                        return;
+                    }
+
+                    // Auto-heal on serverless container cold restart:
+                    const savedName = localStorage.getItem('bunker_saved_name') || 'Игрок';
+                    const savedAvatar = localStorage.getItem('bunker_saved_avatar') || '🦁';
+                    await fetch('/api/join_room', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            room_code: currentRoom,
+                            password: '',
+                            player_name: savedName,
+                            avatar: savedAvatar
+                        })
+                    });
                     return;
                 }
 
