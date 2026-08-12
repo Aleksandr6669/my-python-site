@@ -982,7 +982,7 @@
             if (pollTimer) clearInterval(pollTimer);
         }
 
-        // Animated Tab Switching
+        // Animated Tab Switching + Immediate Data Fetch
         function switchTab(panelId, navEl) {
             const panels = document.querySelectorAll('.tab-panel');
             panels.forEach(p => {
@@ -993,6 +993,16 @@
             const targetPanel = document.getElementById(panelId);
             targetPanel.classList.add('active', 'animate__animated', 'animate__fadeInUp');
             if (navEl) navEl.classList.add('active');
+
+            // If leaving settings tab without saving, discard un-saved draft state
+            if (panelId !== 'panelAdmin') {
+                isUserSettingsAvatarDirty = false;
+                const settingsInput = document.getElementById('settingsPlayerNameInput');
+                if (settingsInput) settingsInput.blur();
+            }
+
+            // Immediately fetch latest server data on tab switch
+            fetchRoomStatus();
         }
 
         // 1-Second Realtime Polling for Available Rooms List
@@ -1306,11 +1316,12 @@
             const me = data.players.find(p => p.id === currentPlayerId);
             if (me) {
                 const settingsInput = document.getElementById('settingsPlayerNameInput');
-                if (document.activeElement !== settingsInput) {
-                    settingsInput.value = me.name;
-                }
+                const settingsPanel = document.getElementById('panelAdmin');
+                const isSettingsActive = settingsPanel && settingsPanel.classList.contains('active');
 
-                if (!isUserSettingsAvatarDirty) {
+                // If user is not actively on Settings or has not modified draft inputs:
+                if (!isSettingsActive || (document.activeElement !== settingsInput && !isUserSettingsAvatarDirty)) {
+                    settingsInput.value = me.name;
                     selectedSettingsAvatar = me.avatar || '🦁';
                     document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => {
                         if (opt.innerText.trim() === selectedSettingsAvatar) {
