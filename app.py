@@ -52,6 +52,18 @@ def cleanup_expired_rooms():
                 del ROOMS[code]
             save_rooms()
 
+def find_room_key(code_input):
+    if not code_input:
+        return None
+    clean = unquote(str(code_input)).strip()
+    if clean in ROOMS:
+        return clean
+    clean_lower = clean.lower()
+    for k in ROOMS.keys():
+        if k.lower() == clean_lower:
+            return k
+    return None
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -95,7 +107,7 @@ def create_room():
     cleanup_expired_rooms()
     data = request.json or {}
     raw_code = data.get("room_code", "").strip()
-    room_code = unquote(raw_code).upper()
+    room_code = unquote(raw_code).strip()
     password = data.get("password", "").strip()
     seats = data.get("seats")
     lifetime_hours = data.get("lifetime_hours")
@@ -156,15 +168,15 @@ def join_room():
     cleanup_expired_rooms()
     data = request.json or {}
     raw_code = data.get("room_code", "").strip()
-    room_code = unquote(raw_code).upper()
     password = data.get("password", "").strip()
     player_name = data.get("player_name", "").strip()[:16]
     avatar = data.get("avatar", "🦊")
 
-    if not room_code or not player_name:
+    if not raw_code or not player_name:
         return jsonify({"error": "Заполните все поля"}), 400
 
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+    room_code = find_room_key(raw_code)
+    if not room_code or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -213,16 +225,16 @@ def join_room():
 @app.route("/api/room_status/<room_code>", methods=["GET"])
 def room_status(room_code):
     cleanup_expired_rooms()
-    room_code = unquote(room_code).upper()
+    matched_code = find_room_key(room_code)
     player_id = request.args.get("player_id")
 
-    if room_code in ROOMS and ROOMS[room_code].get("deleted"):
+    if matched_code and ROOMS[matched_code].get("deleted"):
         return jsonify({"error": "Бункер был удален организатором", "code": "ROOM_DELETED"}), 404
 
-    if room_code not in ROOMS:
+    if not matched_code or matched_code not in ROOMS:
         return jsonify({"error": "Бункер не найден", "code": "ROOM_NOT_FOUND"}), 404
 
-    room = ROOMS[room_code]
+    room = ROOMS[matched_code]
 
     if player_id and player_id not in room["players"]:
         return jsonify({"error": "Игрок не зарегистрирован в бункере", "code": "PLAYER_NOT_FOUND"}), 404
@@ -267,12 +279,13 @@ def room_status(room_code):
 @app.route("/api/update_profile", methods=["POST"])
 def update_profile():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     player_id = data.get("player_id")
     new_name = data.get("name", "").strip()[:16]
     new_avatar = data.get("avatar", "").strip()
 
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+    if not room_code or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -292,12 +305,13 @@ def update_profile():
 @app.route("/api/update_room_settings", methods=["POST"])
 def update_room_settings():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     admin_id = data.get("admin_id")
     new_seats = data.get("seats")
     new_lifetime = data.get("lifetime_hours")
 
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+    if not room_code or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -323,11 +337,12 @@ def update_room_settings():
 @app.route("/api/change_password", methods=["POST"])
 def change_password():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     admin_id = data.get("admin_id")
     new_password = data.get("new_password", "").strip()
 
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+    if not room_code or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -344,10 +359,11 @@ def change_password():
 @app.route("/api/leave_room", methods=["POST"])
 def leave_room_api():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     player_id = data.get("player_id")
 
-    if room_code in ROOMS and player_id in ROOMS[room_code]["players"]:
+    if room_code and room_code in ROOMS and player_id in ROOMS[room_code]["players"]:
         del ROOMS[room_code]["players"][player_id]
         save_rooms()
 
@@ -356,10 +372,11 @@ def leave_room_api():
 @app.route("/api/delete_room", methods=["POST"])
 def delete_room():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     admin_id = data.get("admin_id")
 
-    if room_code not in ROOMS:
+    if not room_code or room_code not in ROOMS:
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -373,10 +390,11 @@ def delete_room():
 @app.route("/api/start_game", methods=["POST"])
 def start_game():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     player_id = data.get("player_id")
 
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+    if not room_code or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -403,11 +421,12 @@ def start_game():
 @app.route("/api/cast_vote", methods=["POST"])
 def cast_vote():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     voter_id = data.get("voter_id")
     target_id = data.get("target_id")
 
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+    if not room_code or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
@@ -432,10 +451,11 @@ def cast_vote():
 @app.route("/api/tally_votes", methods=["POST"])
 def tally_votes():
     data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
+    raw_code = data.get("room_code", "")
+    room_code = find_room_key(raw_code)
     player_id = data.get("player_id")
 
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
+    if not room_code or ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]

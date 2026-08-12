@@ -704,7 +704,7 @@
                 <button class="theme-palette-btn" onclick="openThemeModal()" title="Сменить оформление">
                     <i class="fa-solid fa-palette"></i>
                 </button>
-                <div class="room-badge" id="headerRoomBadge">Не в игре</div>
+                <div class="room-badge" id="headerRoomBadge">Не в бункере</div>
             </div>
         </header>
 
@@ -769,8 +769,8 @@
                     <!-- Поля для входа в существующий бункер -->
                     <div id="joinFields">
                         <div class="form-group">
-                            <label>Код Выбранного Бункера:</label>
-                            <input type="text" id="joinRoomCode" readonly autocomplete="off" autocorrect="off" spellcheck="false" style="background: rgba(255,255,255,0.05); text-transform: uppercase;">
+                            <label>Выбранный Бункер:</label>
+                            <input type="text" id="joinRoomCode" readonly autocomplete="off" autocorrect="off" spellcheck="false" style="background: rgba(255,255,255,0.05); font-weight: 700;">
                         </div>
                         <div class="form-group">
                             <label>Пароль от бункера:</label>
@@ -791,8 +791,8 @@
                     <!-- Поля для создания нового бункера -->
                     <div id="createFields" style="display: none;">
                         <div class="form-group">
-                            <label>Код Нового Бункера:</label>
-                            <input type="text" id="createRoomCode" placeholder="Например: B1" autocomplete="off" autocorrect="off" spellcheck="false" style="text-transform: uppercase;">
+                            <label>Название Бункера:</label>
+                            <input type="text" id="createRoomCode" placeholder="Например: Бункер №1" autocomplete="off" autocorrect="off" spellcheck="false">
                         </div>
                         <div class="form-group">
                             <label>Придумайте Пароль:</label>
@@ -1300,7 +1300,7 @@
                     html += `
                         <div class="room-item-card" onclick="openJoinStep('${r.code}')">
                             <div>
-                                <strong style="color: var(--danger-red); font-size: 1rem;">Код: ${displayCode}</strong>
+                                <strong style="color: var(--danger-red); font-size: 1rem;">Бункер «${displayCode}»</strong>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Кандидатов: ${r.active_count} | Мест в бункере: ${r.seats}</div>
                             </div>
                             <span class="badge badge-active">Войти ➔</span>
@@ -1322,7 +1322,7 @@
 
             document.getElementById('authRoomListStep').style.display = 'none';
             document.getElementById('authFormStep').style.display = 'block';
-            document.getElementById('authStepTitle').innerText = `🚪 Вход в Отбор (${displayCode})`;
+            document.getElementById('authStepTitle').innerHTML = '<i class="fa-solid fa-door-open"></i> Вход в Бункер';
             document.getElementById('joinFields').style.display = 'block';
             document.getElementById('createFields').style.display = 'none';
 
@@ -1336,16 +1336,17 @@
             stopRoomListPolling();
             document.getElementById('authRoomListStep').style.display = 'none';
             document.getElementById('authFormStep').style.display = 'block';
-            document.getElementById('authStepTitle').innerText = '👑 Создание Нового Отбора';
+            document.getElementById('authStepTitle').innerHTML = '<i class="fa-solid fa-plus"></i> Создание Бункера';
             document.getElementById('joinFields').style.display = 'none';
             document.getElementById('createFields').style.display = 'block';
 
+            document.getElementById('createRoomCode').value = '';
+            document.getElementById('createPassword').value = '';
             restoreSavedPlayerName();
             document.getElementById('createRoomCode').focus();
         }
 
         function backToRoomListStep() {
-            document.getElementById('authRoomListStep').style.display = 'block';
             document.getElementById('authFormStep').style.display = 'none';
             startRoomListPolling();
         }
@@ -1508,7 +1509,7 @@
                 displayCode = decodeURIComponent(currentRoom);
             } catch(e){}
 
-            document.getElementById('headerRoomBadge').innerText = `Код: ${displayCode}`;
+            document.getElementById('headerRoomBadge').innerText = `Бункер «${displayCode}»`;
             
             // Show/hide admin control cards
             document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
@@ -1541,7 +1542,7 @@
             document.getElementById('authFormStep').style.display = 'none';
             document.getElementById('gameWrapper').style.display = 'none';
             document.getElementById('bottomNav').style.display = 'none';
-            document.getElementById('headerRoomBadge').innerText = 'Не в игре';
+            document.getElementById('headerRoomBadge').innerText = 'Не в бункере';
             restoreSavedPlayerName();
             startRoomListPolling();
         }
