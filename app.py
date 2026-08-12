@@ -241,6 +241,17 @@ def room_status(room_code):
 
     room = ROOMS[room_code]
 
+    # Auto-restore player if missing on cold restart
+    if player_id and player_id not in room["players"]:
+        room["players"][player_id] = {
+            "id": player_id,
+            "name": "Игрок",
+            "avatar": "👤",
+            "status": "active",
+            "voted_for": None
+        }
+        save_rooms()
+
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     voted_count = len([p for p in active_players if p["voted_for"] is not None])
 
@@ -271,14 +282,22 @@ def update_profile():
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
-    player = room["players"].get(player_id)
-    if not player:
-        return jsonify({"error": "Игрок не найден в бункере"}), 404
-
-    if new_name:
-        player["name"] = new_name
-    if new_avatar:
-        player["avatar"] = new_avatar
+    
+    # Auto-register player if missing in room state
+    if player_id not in room["players"]:
+        room["players"][player_id] = {
+            "id": player_id,
+            "name": new_name if new_name else "Игрок",
+            "avatar": new_avatar if new_avatar else "🦁",
+            "status": "active",
+            "voted_for": None
+        }
+    else:
+        player = room["players"][player_id]
+        if new_name:
+            player["name"] = new_name
+        if new_avatar:
+            player["avatar"] = new_avatar
 
     save_rooms()
     return jsonify({"success": True})

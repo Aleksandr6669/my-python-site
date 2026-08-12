@@ -931,6 +931,7 @@
         let pollTimer = null;
         let listPollTimer = null;
         let previousEliminatedStatus = false;
+        let hasFiredWinnerConfetti = false;
 
         // Player Joining Detection Tracking
         let previousPlayersMap = new Map();
@@ -1016,6 +1017,7 @@
             currentPlayerId = null;
             isAdmin = false;
             previousEliminatedStatus = false;
+            hasFiredWinnerConfetti = false;
             isUserSettingsAvatarDirty = false;
             previousPlayersMap.clear();
             isInitialStatusLoad = true;
@@ -1398,6 +1400,9 @@
             };
             document.getElementById('gameStatusText').innerText = statusMap[data.status] || data.status;
 
+            // Check if user is room admin dynamically from server state
+            isAdmin = (data.admin_id === currentPlayerId);
+
             // Show/hide admin control cards
             document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
             document.getElementById('adminRoomSettingsCard').style.display = isAdmin ? 'block' : 'none';
@@ -1448,13 +1453,16 @@
                 }
             }
 
-            // Check if Game Completed (Survivors Confetti!)
+            // Check if Game Completed (Survivors Confetti SINGLE FIRE!)
             if (data.status === 'finished') {
-                if (me && me.status === 'active' && !previousEliminatedStatus) {
+                if (me && me.status === 'active' && !hasFiredWinnerConfetti) {
+                    hasFiredWinnerConfetti = true;
                     try {
                         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
                     } catch(e){}
                 }
+            } else {
+                hasFiredWinnerConfetti = false;
             }
 
             // Render Player List
@@ -1505,7 +1513,7 @@
                 document.getElementById('votingFormContainer').style.display = 'none';
                 document.getElementById('votedSuccessMessage').style.display = 'none';
                 document.getElementById('eliminatedVoteWarning').style.display = 'block';
-            } else if (me && me.voted_for) {
+            } else if (me && me.voted_for && data.status === 'voting') {
                 document.getElementById('votingFormContainer').style.display = 'none';
                 document.getElementById('votedSuccessMessage').style.display = 'block';
                 document.getElementById('eliminatedVoteWarning').style.display = 'none';
@@ -1607,17 +1615,6 @@
             else {
                 fetchRoomStatus();
                 switchTab('panelVote');
-                
-                // Auto-advance to next round after 3.5 seconds if game is still going
-                setTimeout(async () => {
-                    if (currentRoom && isAdmin) {
-                        const statusRes = await fetch(`/api/room_status/${currentRoom}?player_id=${currentPlayerId}`);
-                        const statusData = await statusRes.json();
-                        if (statusData.status === 'round_results') {
-                            adminNextRound();
-                        }
-                    }
-                }, 3500);
             }
         }
 
