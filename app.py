@@ -235,6 +235,13 @@ def room_status(room_code):
             p_copy["voted_for"] = p["voted_for"] is not None
         sanitized_players.append(p_copy)
 
+    survivors = []
+    if room["status"] == "finished":
+        survivors = [
+            {"id": p["id"], "name": p["name"], "avatar": p.get("avatar", "👤")}
+            for p in active_players
+        ]
+
     return jsonify({
         "code": room["code"],
         "seats": room["seats"],
@@ -246,7 +253,8 @@ def room_status(room_code):
         "voted_count": voted_count,
         "last_eliminated": room["last_eliminated"],
         "round_votes_summary": room["round_votes_summary"],
-        "voting_start_time": room.get("voting_start_time")
+        "voting_start_time": room.get("voting_start_time"),
+        "survivors": survivors
     })
 
 @app.route("/api/update_profile", methods=["POST"])
@@ -485,7 +493,20 @@ def tally_votes():
         room["status"] = "round_results"
 
     save_rooms()
-    return jsonify({"success": True, "eliminated": room["last_eliminated"]})
+
+    survivors = []
+    if room["status"] == "finished":
+        survivors = [
+            {"id": p["id"], "name": p["name"], "avatar": p.get("avatar", "👤")}
+            for p in remaining_active
+        ]
+
+    return jsonify({
+        "success": True, 
+        "eliminated": room["last_eliminated"],
+        "status": room["status"],
+        "survivors": survivors
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

@@ -1699,13 +1699,46 @@
                 }
             }
 
-            // Check if Game Completed (Survivors Confetti SINGLE FIRE!)
+            // Check if Game Completed (Survivors Celebration SINGLE FIRE!)
             if (data.status === 'finished') {
-                if (me && me.status === 'active' && !hasFiredWinnerConfetti) {
+                if (!hasFiredWinnerConfetti) {
                     hasFiredWinnerConfetti = true;
                     try {
-                        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                        confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
                     } catch(e){}
+
+                    const activeSurvivors = (data.survivors && data.survivors.length > 0) 
+                        ? data.survivors 
+                        : data.players.filter(p => p.status === 'active');
+
+                    const survivorListHtml = activeSurvivors.map(s => `
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; margin-bottom: 8px;">
+                            <span style="font-size: 1.4rem;">${s.avatar || '👤'}</span>
+                            <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">${s.name}</span>
+                            <span style="margin-left: auto; font-size: 0.72rem; background: var(--accent-amber); color: #000; font-weight: 800; padding: 3px 8px; border-radius: 6px;">В БУНКЕРЕ</span>
+                        </div>
+                    `).join('');
+
+                    Swal.fire({
+                        title: '🎉 ПОБЕДА! ВЫ ВЫЖИЛИ!',
+                        html: `
+                            <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 16px; line-height: 1.5;">
+                                Отбор завершен! Количество оставшихся участников совпало с количеством мест в Бункере! Поздравляем всех выживших!
+                            </div>
+                            <div style="text-align: left; margin-top: 10px;">
+                                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--accent-amber); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">Выжившие участники:</div>
+                                ${survivorListHtml || '<div style="color: white; text-align: center;">Поздравляем победтелей!</div>'}
+                            </div>
+                        `,
+                        icon: 'success',
+                        confirmButtonText: 'Ура! 🥳',
+                        confirmButtonColor: '#f59e0b',
+                        background: '#0b0f19',
+                        color: '#fff',
+                        customClass: {
+                            popup: 'animate__animated animate__bounceIn'
+                        }
+                    });
                 }
             } else {
                 hasFiredWinnerConfetti = false;
@@ -1723,6 +1756,8 @@
                 let badgeHtml = '';
                 if (isEliminated) {
                     badgeHtml += `<span class="badge badge-eliminated">Выбыл</span>`;
+                } else if (data.status === 'finished') {
+                    badgeHtml += `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid var(--accent-amber); font-weight: 800;"><i class="fa-solid fa-trophy"></i> В Бункере</span>`;
                 } else {
                     badgeHtml += `<span class="badge badge-active">В отборе</span>`;
                 }
@@ -1821,7 +1856,9 @@
             }
 
             // Results Summary Block inside Voting Tab
-            if (data.last_eliminated) {
+            if (data.status === 'finished') {
+                document.getElementById('eliminatedResultText').innerText = `🏆 Отбор завершен! Все оставшиеся участники выжили и зашли в Бункер!`;
+            } else if (data.last_eliminated) {
                 document.getElementById('eliminatedResultText').innerText = `🚫 Из отбора выбывает: ${data.last_eliminated}`;
             } else {
                 document.getElementById('eliminatedResultText').innerText = `Голосование в процессе (${data.voted_count} из ${data.active_count} проголосовали)`;
