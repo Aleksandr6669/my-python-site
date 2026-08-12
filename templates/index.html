@@ -661,8 +661,20 @@
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 2: ВЫБЫВАНИЕ И ГОЛОСОВАНИЕ ПРОТИВ -->
+                <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ И УПРАВЛЕНИЕ РАУНДАМИ -->
                 <div id="panelVote" class="tab-panel animate__animated animate__fadeInUp">
+                    
+                    <!-- РАЗДЕЛ УПРАВЛЕНИЯ ГОЛОСОВАНИЕМ ДЛЯ ОРГАНИЗАТОРА -->
+                    <div id="adminVotingActionsCard" class="card" style="display: none;">
+                        <div class="card-title"><i class="fa-solid fa-sliders"></i> Управление Голосованием</div>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn btn-amber" onclick="adminStartGame()"><i class="fa-solid fa-play"></i> Запустить Голосование</button>
+                            <button class="btn" onclick="adminTallyVotes()"><i class="fa-solid fa-square-check"></i> Подвести Итоги Раунда</button>
+                            <button class="btn btn-outline" onclick="adminNextRound()"><i class="fa-solid fa-forward"></i> Начать Следующий Раунд</button>
+                        </div>
+                    </div>
+
+                    <!-- БЛОК ВЫБОРА КАНДИДАТА НА ИСКЛЮЧЕНИЕ -->
                     <div class="card">
                         <div class="card-title"><i class="fa-solid fa-user-xmark"></i> Исключение из Отбора</div>
                         
@@ -693,7 +705,7 @@
                     </div>
                 </div>
 
-                <!-- ВКЛАДКА 3: НАСТРОЙКИ И УПРАВЛЕНИЕ ИГРОЙ -->
+                <!-- ВКЛАДКА 3: НАСТРОЙКИ ПРОФИЛЯ И БУНКЕРА -->
                 <div id="panelAdmin" class="tab-panel animate__animated animate__fadeInUp">
                     
                     <!-- РАЗДЕЛ: НАСТРОЙКИ ПРОФИЛЯ ИГРОКА (ДЛЯ ВСЕХ УЧАСТНИКОВ) -->
@@ -723,17 +735,12 @@
                         <button class="btn btn-outline" onclick="leaveRoom()"><i class="fa-solid fa-right-from-bracket"></i> Выйти из Бункера</button>
                     </div>
 
-                    <!-- РАЗДЕЛ: УПРАВЛЕНИЕ ОРГАНИЗАТОРА (ТОЛЬКО ДЛЯ АДМИНА) -->
-                    <div class="card" style="margin-top: 14px;">
-                        <div class="card-title"><i class="fa-solid fa-sliders"></i> Управление Отбором</div>
+                    <!-- РАЗДЕЛ: НАСТРОЙКИ ПАРОЛЯ И УДАЛЕНИЯ БУНКЕРА (ТОЛЬКО ДЛЯ АДМИНА) -->
+                    <div id="adminRoomSettingsCard" class="card" style="margin-top: 14px; display: none;">
+                        <div class="card-title"><i class="fa-solid fa-gear"></i> Обслуживание Бункера</div>
                         
                         <div id="adminControls">
-                            <button class="btn btn-amber" style="margin-bottom: 10px;" onclick="adminStartGame()"><i class="fa-solid fa-play"></i> Запустить Голосование</button>
-                            <button class="btn" style="margin-bottom: 10px;" onclick="adminTallyVotes()"><i class="fa-solid fa-square-check"></i> Подвести Итоги Раунда</button>
-                            <button class="btn btn-outline" style="margin-bottom: 14px;" onclick="adminNextRound()"><i class="fa-solid fa-forward"></i> Начать Следующий Раунд</button>
-
-                            <!-- СМЕНА ПАРОЛЯ ДЛЯ АДМИНА -->
-                            <div class="form-group" style="margin-top: 14px;">
+                            <div class="form-group">
                                 <label>Новый пароль бункера:</label>
                                 <div class="password-wrapper">
                                     <input type="password" id="adminNewPasswordInput" placeholder="Придумайте новый пароль" autocomplete="new-password" autocorrect="off">
@@ -745,10 +752,6 @@
                             <button class="btn btn-amber" style="margin-bottom: 14px;" onclick="adminChangePassword()"><i class="fa-solid fa-key"></i> Сменить Пароль</button>
 
                             <button class="btn btn-outline" style="border-color: var(--danger-red); color: var(--danger-red);" onclick="adminDeleteRoom()"><i class="fa-solid fa-trash"></i> Удалить этот Бункер</button>
-                        </div>
-
-                        <div id="notAdminNotice" style="display: none; color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">
-                            Управление голосованием и раундами доступно организатору отбора.
                         </div>
                     </div>
 
@@ -766,7 +769,7 @@
             </div>
             <div class="nav-item" onclick="switchTab('panelVote', this)">
                 <span class="icon"><i class="fa-solid fa-check-to-slot"></i></span>
-                <span>Выбывание</span>
+                <span>Голосование</span>
             </div>
             <div class="nav-item" onclick="switchTab('panelAdmin', this)">
                 <span class="icon"><i class="fa-solid fa-sliders"></i></span>
@@ -1216,8 +1219,10 @@
             } catch(e){}
 
             document.getElementById('headerRoomBadge').innerText = `Код: ${displayCode}`;
-            document.getElementById('notAdminNotice').style.display = isAdmin ? 'none' : 'block';
-            document.getElementById('adminControls').style.display = isAdmin ? 'block' : 'none';
+            
+            // Show/hide admin control blocks based on role
+            document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('adminRoomSettingsCard').style.display = isAdmin ? 'block' : 'none';
 
             if (initialData) {
                 renderRoomData(initialData);
@@ -1312,6 +1317,10 @@
             };
             document.getElementById('gameStatusText').innerText = statusMap[data.status] || data.status;
 
+            // Show/hide admin control cards
+            document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('adminRoomSettingsCard').style.display = isAdmin ? 'block' : 'none';
+
             // Pre-fill profile settings ONLY when user is not actively typing or picking an avatar
             const me = data.players.find(p => p.id === currentPlayerId);
             if (me) {
@@ -1319,7 +1328,6 @@
                 const settingsPanel = document.getElementById('panelAdmin');
                 const isSettingsActive = settingsPanel && settingsPanel.classList.contains('active');
 
-                // If user is not actively on Settings or has not modified draft inputs:
                 if (!isSettingsActive || (document.activeElement !== settingsInput && !isUserSettingsAvatarDirty)) {
                     settingsInput.value = me.name;
                     selectedSettingsAvatar = me.avatar || '🦁';
