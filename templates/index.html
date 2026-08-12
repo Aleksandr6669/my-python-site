@@ -901,6 +901,10 @@
         let listPollTimer = null;
         let previousEliminatedStatus = false;
 
+        // Player Joining Detection Tracking
+        let previousPlayersMap = new Map();
+        let isInitialStatusLoad = true;
+
         function savePlayerProfileLocally(name, avatar) {
             if (name) localStorage.setItem('bunker_saved_name', name.trim());
             if (avatar) localStorage.setItem('bunker_saved_avatar', avatar);
@@ -982,6 +986,8 @@
             isAdmin = false;
             previousEliminatedStatus = false;
             isUserSettingsAvatarDirty = false;
+            previousPlayersMap.clear();
+            isInitialStatusLoad = true;
             if (pollTimer) clearInterval(pollTimer);
         }
 
@@ -997,15 +1003,17 @@
             targetPanel.classList.add('active', 'animate__animated', 'animate__fadeInUp');
             if (navEl) navEl.classList.add('active');
 
+            const isEnteringSettings = (panelId === 'panelAdmin');
+
             // If leaving settings tab without saving, discard un-saved draft state
-            if (panelId !== 'panelAdmin') {
+            if (!isEnteringSettings) {
                 isUserSettingsAvatarDirty = false;
                 const settingsInput = document.getElementById('settingsPlayerNameInput');
                 if (settingsInput) settingsInput.blur();
             }
 
             // Immediately fetch latest server data on tab switch
-            fetchRoomStatus();
+            fetchRoomStatus(isEnteringSettings);
         }
 
         // 1-Second Realtime Polling for Available Rooms List
@@ -1177,7 +1185,7 @@
             isUserSettingsAvatarDirty = false; // Reset modified flag
             Toast.fire({ icon: 'success', title: 'Профиль успешно обновлен!' });
             document.getElementById('settingsPlayerNameInput').blur();
-            fetchRoomStatus();
+            fetchRoomStatus(true);
         }
 
         async function adminChangePassword() {
@@ -1220,18 +1228,18 @@
 
             document.getElementById('headerRoomBadge').innerText = `Код: ${displayCode}`;
             
-            // Show/hide admin control blocks based on role
+            // Show/hide admin control cards
             document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
             document.getElementById('adminRoomSettingsCard').style.display = isAdmin ? 'block' : 'none';
 
             if (initialData) {
-                renderRoomData(initialData);
+                renderRoomData(initialData, true);
             } else {
-                fetchRoomStatus();
+                fetchRoomStatus(true);
             }
 
             if (pollTimer) clearInterval(pollTimer);
-            pollTimer = setInterval(fetchRoomStatus, 1000);
+            pollTimer = setInterval(() => fetchRoomStatus(false), 1000);
         }
 
         async function leaveRoom() {
@@ -1285,7 +1293,7 @@
         }
 
         // Silent 1-Second Background Polling
-        async function fetchRoomStatus() {
+        async function fetchRoomStatus(forcePopulateSettings = false) {
             if (!currentRoom) return;
 
             try {
@@ -1299,12 +1307,12 @@
                 }
 
                 if (res.ok) {
-                    renderRoomData(data);
+                    renderRoomData(data, forcePopulateSettings);
                 }
             } catch(e) {}
         }
 
-        function renderRoomData(data) {
+        function renderRoomData(data, forcePopulateSettings = false) {
             // Update Status Texts
             document.getElementById('roundText').innerText = data.round;
             document.getElementById('seatsText').innerText = data.seats;
@@ -1321,14 +1329,33 @@
             document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
             document.getElementById('adminRoomSettingsCard').style.display = isAdmin ? 'block' : 'none';
 
-            // Pre-fill profile settings ONLY when user is not actively typing or picking an avatar
+            // DETECT NEW PLAYERS JOINING (Trigger Global Toast on ALL Tabs!)
+            const currentActivePlayers = data.players.filter(p => p.status === 'active');
+            const currentMap = new Map();
+            currentActivePlayers.forEach(p => currentMap.set(p.id, p));
+
+            if (!isInitialStatusLoad) {
+                currentActivePlayers.forEach(p => {
+                    if (!previousPlayersMap.has(p.id) && p.id !== currentPlayerId) {
+                        Toast.fire({
+                            icon: 'info',
+                            title: `👋 ${p.avatar || '👤'} ${p.name} присоединился к отбору!`
+                        });
+                    }
+                });
+            } else {
+                isInitialStatusLoad = false;
+            }
+            previousPlayersMap = currentMap;
+
+            // Pre-fill profile settings ONLY upon entering settings tab OR explicit force populate
             const me = data.players.find(p => p.id === currentPlayerId);
             if (me) {
                 const settingsInput = document.getElementById('settingsPlayerNameInput');
                 const settingsPanel = document.getElementById('panelAdmin');
                 const isSettingsActive = settingsPanel && settingsPanel.classList.contains('active');
 
-                if (!isSettingsActive || (document.activeElement !== settingsInput && !isUserSettingsAvatarDirty)) {
+                if (forcePopulateSettings || (!isSettingsActive && !isUserSettingsAvatarDirty && document.activeElement !== settingsInput)) {
                     settingsInput.value = me.name;
                     selectedSettingsAvatar = me.avatar || '🦁';
                     document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => {
@@ -1374,7 +1401,7 @@
             // Update Voting Candidates List
             const isMeEliminated = me && me.status === 'eliminated';
 
-            // TRIGGER ELIMINATION NOTIFICATION
+            // TRIGGER ELIMINATION NOTIFICATION (GLOBAL ON ALL TABS!)
             if (isMeEliminated && !previousEliminatedStatus) {
                 previousEliminatedStatus = true;
                 Swal.fire({
