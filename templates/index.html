@@ -839,6 +839,7 @@
         let isAdmin = false;
         let selectedAvatar = '🦁';
         let selectedSettingsAvatar = '🦁';
+        let isUserSettingsAvatarDirty = false;
         let pollTimer = null;
         let listPollTimer = null;
         let previousEliminatedStatus = false;
@@ -881,6 +882,7 @@
             document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => opt.classList.remove('selected'));
             el.classList.add('selected');
             selectedSettingsAvatar = avatar;
+            isUserSettingsAvatarDirty = true; // Mark as manually selected by user
         }
 
         function saveSession(roomCode, playerId, adminFlag) {
@@ -897,6 +899,7 @@
             currentPlayerId = null;
             isAdmin = false;
             previousEliminatedStatus = false;
+            isUserSettingsAvatarDirty = false;
             if (pollTimer) clearInterval(pollTimer);
         }
 
@@ -1079,6 +1082,7 @@
                 return;
             }
 
+            isUserSettingsAvatarDirty = false; // Reset modified flag
             Toast.fire({ icon: 'success', title: 'Профиль успешно обновлен!' });
             document.getElementById('settingsPlayerNameInput').blur();
             fetchRoomStatus();
@@ -1219,21 +1223,24 @@
             };
             document.getElementById('gameStatusText').innerText = statusMap[data.status] || data.status;
 
-            // Pre-fill profile settings ONLY when user is not actively typing
+            // Pre-fill profile settings ONLY when user is not actively typing or picking an avatar
             const me = data.players.find(p => p.id === currentPlayerId);
             if (me) {
                 const settingsInput = document.getElementById('settingsPlayerNameInput');
                 if (document.activeElement !== settingsInput) {
                     settingsInput.value = me.name;
                 }
-                selectedSettingsAvatar = me.avatar || '🦁';
-                document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => {
-                    if (opt.innerText.trim() === selectedSettingsAvatar) {
-                        opt.classList.add('selected');
-                    } else {
-                        opt.classList.remove('selected');
-                    }
-                });
+
+                if (!isUserSettingsAvatarDirty) {
+                    selectedSettingsAvatar = me.avatar || '🦁';
+                    document.querySelectorAll('#settingsAvatarPicker .avatar-option').forEach(opt => {
+                        if (opt.innerText.trim() === selectedSettingsAvatar) {
+                            opt.classList.add('selected');
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                }
             }
 
             // Check if Game Completed (Survivors Confetti!)
