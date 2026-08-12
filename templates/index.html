@@ -103,6 +103,8 @@
             color: var(--text-main);
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             transition: background-color 0.4s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .app-wrapper {
@@ -117,7 +119,7 @@
             overflow: hidden;
         }
 
-        /* Frosted Glass Header */
+        /* Frosted Glass Header with Crisp Text Rendering */
         header {
             position: absolute;
             top: 0;
@@ -127,25 +129,28 @@
             padding-top: env(safe-area-inset-top, 0px);
             padding-left: 14px;
             padding-right: 14px;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 100;
+            transform: translateZ(0);
+            -webkit-font-smoothing: antialiased;
         }
 
         .brand-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1.22rem;
             color: var(--danger-red);
             letter-spacing: 1.5px;
             font-weight: 900;
-            text-shadow: 0 0 12px var(--danger-red);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
             flex-shrink: 0;
             line-height: 1;
+            -webkit-font-smoothing: antialiased;
         }
 
         .header-actions {
@@ -178,7 +183,7 @@
 
         .room-badge {
             font-size: 0.78rem;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.08);
             color: var(--accent-amber);
             border: 1px solid var(--border-color);
             padding: 0 12px;
@@ -190,8 +195,8 @@
             justify-content: center;
             flex-shrink: 0;
             white-space: nowrap;
-            backdrop-filter: blur(12px);
-            box-shadow: var(--border-glow);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Main Content Scrollable Area */
