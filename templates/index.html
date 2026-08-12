@@ -295,12 +295,15 @@
             box-shadow: 0 0 12px var(--border-color);
         }
 
-        /* Avatar Picker Grid */
+        /* Avatar Picker Grid - Rich Character Variety */
         .avatar-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 14px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
         .avatar-option {
@@ -550,6 +553,18 @@
         .back-btn:hover {
             color: white;
         }
+
+        /* Pulsing Timer Animation */
+        @keyframes pulseClock {
+            0% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.08); opacity: 1; text-shadow: 0 0 12px var(--accent-amber); }
+            100% { transform: scale(1); opacity: 0.85; }
+        }
+
+        .timer-ticking {
+            display: inline-block;
+            animation: pulseClock 1s infinite ease-in-out;
+        }
     </style>
 </head>
 <body data-theme="red">
@@ -595,7 +610,7 @@
                     
                     <div class="card-title" id="authStepTitle"><i class="fa-solid fa-door-open"></i> Вход в Бункер</div>
 
-                    <!-- Выбор Аватарки -->
+                    <!-- Выбор Аватарки (Животные, Чудовища, Персонажи) -->
                     <label>Выберите вашу Аватарку:</label>
                     <div class="avatar-grid" id="avatarPicker">
                         <div class="avatar-option selected" onclick="selectAvatar(this, '🦁')">🦁</div>
@@ -606,8 +621,22 @@
                         <div class="avatar-option" onclick="selectAvatar(this, '🐼')">🐼</div>
                         <div class="avatar-option" onclick="selectAvatar(this, '🐻')">🐻</div>
                         <div class="avatar-option" onclick="selectAvatar(this, '🦉')">🦉</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🦄')">🦄</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🐉')">🐉</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🦅')">🦅</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🦈')">🦈</div>
                         <div class="avatar-option" onclick="selectAvatar(this, '🤖')">🤖</div>
                         <div class="avatar-option" onclick="selectAvatar(this, '👽')">👽</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🧟')">🧟</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🧛')">🧛</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🧌')">🧌</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '👻')">👻</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '👺')">👺</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🤡')">🤡</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '👸')">👸</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🦸')">🦸</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '👩‍🚀')">👩‍🚀</div>
+                        <div class="avatar-option" onclick="selectAvatar(this, '🥷')">🥷</div>
                     </div>
 
                     <!-- Поля для входа в существующий бункер -->
@@ -690,23 +719,27 @@
                 <!-- ВКЛАДКА 2: ГОЛОСОВАНИЕ И УПРАВЛЕНИЕ РАУНДАМИ -->
                 <div id="panelVote" class="tab-panel animate__animated animate__fadeInUp">
                     
-                    <!-- РАЗДЕЛ УПРАВЛЕНИЯ ГОЛОСОВАНИЕМ ДЛЯ ОРГАНИЗАТОРА -->
+                    <!-- РАЗДЕЛ УПРАВЛЕНИЯ ГОЛОСОВАНИЕМ ДЛЯ ОРГАНИЗАТОРА (2 ЧЕТКИЕ КНОПКИ) -->
                     <div id="adminVotingActionsCard" class="card" style="display: none;">
                         <div class="card-title"><i class="fa-solid fa-sliders"></i> Управление Голосованием</div>
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <button class="btn btn-amber" onclick="adminStartGame()"><i class="fa-solid fa-play"></i> Запустить Голосование</button>
-                            <button class="btn" onclick="adminTallyVotes()"><i class="fa-solid fa-square-check"></i> Подвести Итоги Раунда</button>
-                            <button class="btn btn-outline" onclick="adminNextRound()"><i class="fa-solid fa-forward"></i> Начать Следующий Раунд</button>
+                            <button class="btn" onclick="adminTallyVotes()"><i class="fa-solid fa-square-check"></i> Завершить и Подвести Итоги</button>
                         </div>
                     </div>
 
-                    <!-- БЛОК ВЫБОРА КАНДИДАТА НА ИСКЛЮЧЕНИЕ -->
+                    <!-- БЛОК ВЫБОРА КАНДИДАТА НА ИСКЛЮЧЕНИЕ С АНИМИРОВАННЫМ ТАЙМЕРОМ -->
                     <div class="card">
                         <div class="card-title"><i class="fa-solid fa-user-xmark"></i> Исключение из Отбора</div>
                         
+                        <!-- ЧАСИКИ ГОЛОСОВАНИЯ -->
+                        <div id="votingClockContainer" style="display: none; text-align: center; margin: 10px 0 16px 0; font-family: 'Orbitron', sans-serif; font-size: 1.05rem; color: var(--accent-amber);">
+                            <span class="timer-ticking">⏱️ Время голосования: <span id="votingTimerDisplay">00:00</span></span>
+                        </div>
+
                         <div id="votingFormContainer">
                             <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                                Нажмите кнопку напротив кандидата, чтобы отдать голос <strong>на его выбывание</strong>:
+                                Нажмите кнопку напротив кандидата, чтобы отдать голос <strong>на его выбывание</strong> (1 голос за раунд):
                             </div>
                             
                             <ul class="player-list" id="votingCandidatesList"></ul>
@@ -748,8 +781,22 @@
                             <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐼')">🐼</div>
                             <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐻')">🐻</div>
                             <div class="avatar-option" onclick="selectSettingsAvatar(this, '🦉')">🦉</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🦄')">🦄</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🐉')">🐉</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🦅')">🦅</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🦈')">🦈</div>
                             <div class="avatar-option" onclick="selectSettingsAvatar(this, '🤖')">🤖</div>
                             <div class="avatar-option" onclick="selectSettingsAvatar(this, '👽')">👽</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🧟')">🧟</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🧛')">🧛</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🧌')">🧌</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '👻')">👻</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '👺')">👺</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🤡')">🤡</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '👸')">👸</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🦸')">🦸</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '👩‍🚀')">👩‍🚀</div>
+                            <div class="avatar-option" onclick="selectSettingsAvatar(this, '🥷')">🥷</div>
                         </div>
 
                         <div class="form-group">
@@ -940,8 +987,9 @@
         let previousEliminatedStatus = false;
         let hasFiredWinnerConfetti = false;
 
-        // Player Joining Detection Tracking
-        let previousPlayersMap = new Map();
+        // Player Joining & Leaving Tracking (Fires strictly ONCE per player ID!)
+        let notifiedPlayerIds = new Set();
+        let knownPlayersMap = new Map();
         let isInitialStatusLoad = true;
 
         // Active Session Storage Helpers (Persists unless user clicks "Выйти из Бункера")
@@ -962,7 +1010,8 @@
             previousEliminatedStatus = false;
             hasFiredWinnerConfetti = false;
             isUserSettingsAvatarDirty = false;
-            previousPlayersMap.clear();
+            notifiedPlayerIds.clear();
+            knownPlayersMap.clear();
             isInitialStatusLoad = true;
             if (pollTimer) clearInterval(pollTimer);
         }
@@ -1449,7 +1498,7 @@
             // Check if user is room admin dynamically from server state
             isAdmin = (data.admin_id === currentPlayerId);
 
-            // Show/hide admin control cards
+            // Show/hide admin control cards (ONLY 2 CLEAN BUTTONS: START & TALLY)
             document.getElementById('adminVotingActionsCard').style.display = isAdmin ? 'block' : 'none';
             document.getElementById('adminRoomSettingsCard').style.display = isAdmin ? 'block' : 'none';
 
@@ -1460,24 +1509,51 @@
                 }
             }
 
-            // DETECT NEW PLAYERS JOINING (Trigger Global Toast on ALL Tabs!)
-            const currentActivePlayers = data.players.filter(p => p.status === 'active');
-            const currentMap = new Map();
-            currentActivePlayers.forEach(p => currentMap.set(p.id, p));
+            // VOTING TIMER CLOCK ANIMATION
+            const timerContainer = document.getElementById('votingClockContainer');
+            const timerDisplay = document.getElementById('votingTimerDisplay');
+            if (data.status === 'voting' && data.voting_start_time) {
+                timerContainer.style.display = 'block';
+                const elapsedSec = Math.max(0, Math.floor(Date.now() / 1000 - data.voting_start_time));
+                const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+                const secs = String(elapsedSec % 60).padStart(2, '0');
+                timerDisplay.innerText = `${mins}:${secs}`;
+            } else {
+                timerContainer.style.display = 'none';
+            }
+
+            // SINGLE-FIRE PLAYER JOIN & LEAVE TOAST NOTIFICATIONS
+            const currentPlayersMap = new Map();
+            data.players.forEach(p => currentPlayersMap.set(p.id, p));
 
             if (!isInitialStatusLoad) {
-                currentActivePlayers.forEach(p => {
-                    if (!previousPlayersMap.has(p.id) && p.id !== currentPlayerId) {
+                // Detect newly joined players (strictly ONE notification per player!)
+                data.players.forEach(p => {
+                    if (!knownPlayersMap.has(p.id) && p.id !== currentPlayerId) {
+                        if (!notifiedPlayerIds.has(p.id)) {
+                            notifiedPlayerIds.add(p.id);
+                            Toast.fire({
+                                icon: 'info',
+                                title: `👋 ${p.avatar || '👤'} ${p.name} присоединился к отбору!`
+                            });
+                        }
+                    }
+                });
+
+                // Detect players leaving
+                knownPlayersMap.forEach((oldP, oldId) => {
+                    if (!currentPlayersMap.has(oldId) && oldId !== currentPlayerId) {
                         Toast.fire({
-                            icon: 'info',
-                            title: `👋 ${p.avatar || '👤'} ${p.name} присоединился к отбору!`
+                            icon: 'warning',
+                            title: `🚪 ${oldP.avatar || '👤'} ${oldP.name} покинул отбор`
                         });
                     }
                 });
             } else {
                 isInitialStatusLoad = false;
+                data.players.forEach(p => notifiedPlayerIds.add(p.id));
             }
-            previousPlayersMap = currentMap;
+            knownPlayersMap = currentPlayersMap;
 
             // Pre-fill profile settings ONLY upon entering settings tab OR explicit force populate
             const me = data.players.find(p => p.id === currentPlayerId);
@@ -1645,8 +1721,9 @@
             const data = await res.json();
             if (data.error) Toast.fire({ icon: 'error', title: data.error });
             else {
-                Toast.fire({ icon: 'success', title: 'Голосование заложено!' });
+                Toast.fire({ icon: 'success', title: 'Голосование запущено!' });
                 fetchRoomStatus();
+                switchTab('panelVote');
             }
         }
 
@@ -1659,20 +1736,7 @@
             const data = await res.json();
             if (data.error) Toast.fire({ icon: 'error', title: data.error });
             else {
-                fetchRoomStatus();
-                switchTab('panelVote');
-            }
-        }
-
-        async function adminNextRound() {
-            const res = await fetch('/api/next_round', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({room_code: currentRoom, player_id: currentPlayerId})
-            });
-            const data = await res.json();
-            if (data.error) Toast.fire({ icon: 'error', title: data.error });
-            else {
+                Toast.fire({ icon: 'success', title: 'Итоги раунда подведены!' });
                 fetchRoomStatus();
                 switchTab('panelVote');
             }

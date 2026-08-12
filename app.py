@@ -111,6 +111,7 @@ def create_room():
         "expires_at": expires_at,
         "deleted": False,
         "admin_id": admin_id,
+        "voting_start_time": None,
         "players": {
             admin_id: {"id": admin_id, "name": admin_name, "avatar": avatar, "status": "active", "voted_for": None}
         },
@@ -134,7 +135,8 @@ def create_room():
             "active_count": 1,
             "voted_count": 0,
             "last_eliminated": None,
-            "round_votes_summary": {}
+            "round_votes_summary": {},
+            "voting_start_time": None
         }
     })
 
@@ -168,6 +170,7 @@ def join_room():
             "expires_at": expires_at,
             "deleted": False,
             "admin_id": admin_id,
+            "voting_start_time": None,
             "players": {
                 admin_id: {"id": admin_id, "name": player_name, "avatar": avatar, "status": "active", "voted_for": None}
             },
@@ -257,7 +260,8 @@ def room_status(room_code):
         "active_count": len(active_players),
         "voted_count": voted_count,
         "last_eliminated": room["last_eliminated"],
-        "round_votes_summary": room["round_votes_summary"]
+        "round_votes_summary": room["round_votes_summary"],
+        "voting_start_time": room.get("voting_start_time")
     })
 
 @app.route("/api/update_profile", methods=["POST"])
@@ -395,19 +399,23 @@ def start_game():
 
     room = ROOMS[room_code]
     if room["admin_id"] != player_id:
-        return jsonify({"error": "Только создатель может начать игру"}), 403
+        return jsonify({"error": "Только создатель может начать голосование"}), 403
 
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     if len(active_players) <= room["seats"]:
         return jsonify({"error": f"Количество участников ({len(active_players)}) должно быть больше мест в бункере ({room['seats']})"}), 400
 
+    # Auto-increment round if starting new round from round_results/voting
+    if room["status"] in ["round_results", "voting"] and room.get("voting_start_time"):
+        room["round"] += 1
+
     room["status"] = "voting"
-    room["round"] = 1
     room["last_eliminated"] = None
+    room["voting_start_time"] = time.time()
     for p in room["players"].values():
         p["voted_for"] = None
-    save_rooms()
 
+    save_rooms()
     return jsonify({"success": True})
 
 @app.route("/api/cast_vote", methods=["POST"])
@@ -489,29 +497,6 @@ def tally_votes():
 
     save_rooms()
     return jsonify({"success": True, "eliminated": room["last_eliminated"]})
-
-@app.route("/api/next_round", methods=["POST"])
-def next_round():
-    global ROOMS
-    ROOMS = load_rooms()
-    data = request.json or {}
-    room_code = unquote(data.get("room_code", "")).upper()
-    player_id = data.get("player_id")
-
-    if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
-        return jsonify({"error": "Бункер не найден"}), 404
-
-    room = ROOMS[room_code]
-    if room["admin_id"] != player_id:
-        return jsonify({"error": "Только создатель бункера может запускать следующий раунд"}), 403
-
-    room["round"] += 1
-    room["status"] = "voting"
-    for p in room["players"].values():
-        p["voted_for"] = None
-
-    save_rooms()
-    return jsonify({"success": True})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
