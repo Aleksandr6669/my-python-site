@@ -15,21 +15,27 @@ ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v4.json")
 rooms_lock = threading.Lock()
 
 def load_rooms():
+    global ROOMS
     with rooms_lock:
         if os.path.exists(ROOMS_FILE):
             try:
                 with open(ROOMS_FILE, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        return data
             except Exception as e:
                 print("Load rooms error:", e)
-                return {}
+        if 'ROOMS' in globals() and isinstance(ROOMS, dict):
+            return ROOMS
         return {}
 
 def save_rooms():
     with rooms_lock:
         try:
-            with open(ROOMS_FILE, "w", encoding="utf-8") as f:
+            tmp_file = ROOMS_FILE + ".tmp"
+            with open(tmp_file, "w", encoding="utf-8") as f:
                 json.dump(ROOMS, f, ensure_ascii=False, indent=2)
+            os.replace(tmp_file, ROOMS_FILE)
         except Exception as e:
             print("Save rooms error:", e)
 
@@ -39,11 +45,12 @@ ROOMS = load_rooms()
 def cleanup_expired_rooms():
     global ROOMS
     now = time.time()
-    expired = [code for code, r in ROOMS.items() if r.get("expires_at") and now > r["expires_at"]]
-    if expired:
-        for code in expired:
-            del ROOMS[code]
-        save_rooms()
+    with rooms_lock:
+        expired = [code for code, r in ROOMS.items() if r.get("expires_at") and now > r["expires_at"]]
+        if expired:
+            for code in expired:
+                del ROOMS[code]
+            save_rooms()
 
 @app.route("/")
 def index():
