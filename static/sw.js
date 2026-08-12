@@ -1,7 +1,10 @@
-const CACHE_NAME = 'bunker-pwa-v4';
+const CACHE_NAME = 'bunker-pwa-v6';
 const ASSETS = [
   '/',
-  '/manifest.json'
+  '/manifest.json',
+  '/static/icon-192.png',
+  '/static/icon-512.png',
+  '/static/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

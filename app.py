@@ -4,6 +4,7 @@ import os
 import json
 import tempfile
 import time
+import threading
 from urllib.parse import unquote
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -11,22 +12,26 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 TEMP_DIR = tempfile.gettempdir()
 ROOMS_FILE = os.path.join(TEMP_DIR, "bunker_rooms_v4.json")
 
+rooms_lock = threading.Lock()
+
 def load_rooms():
-    if os.path.exists(ROOMS_FILE):
-        try:
-            with open(ROOMS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print("Load rooms error:", e)
-            return {}
-    return {}
+    with rooms_lock:
+        if os.path.exists(ROOMS_FILE):
+            try:
+                with open(ROOMS_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                print("Load rooms error:", e)
+                return {}
+        return {}
 
 def save_rooms():
-    try:
-        with open(ROOMS_FILE, "w", encoding="utf-8") as f:
-            json.dump(ROOMS, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print("Save rooms error:", e)
+    with rooms_lock:
+        try:
+            with open(ROOMS_FILE, "w", encoding="utf-8") as f:
+                json.dump(ROOMS, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print("Save rooms error:", e)
 
 # Storage for rooms (DB File)
 ROOMS = load_rooms()
@@ -155,35 +160,8 @@ def join_room():
     if not room_code or not player_name:
         return jsonify({"error": "Заполните все поля"}), 400
 
-    # Auto-restore room on Vercel cold restart
     if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
-        created_at = time.time()
-        expires_at = created_at + (2 * 3600)
-        admin_id = str(uuid.uuid4())
-        ROOMS[room_code] = {
-            "code": room_code,
-            "password": password,
-            "seats": 3,
-            "status": "lobby",
-            "round": 1,
-            "created_at": created_at,
-            "expires_at": expires_at,
-            "deleted": False,
-            "admin_id": admin_id,
-            "voting_start_time": None,
-            "players": {
-                admin_id: {"id": admin_id, "name": player_name, "avatar": avatar, "status": "active", "voted_for": None}
-            },
-            "last_eliminated": None,
-            "round_votes_summary": {}
-        }
-        save_rooms()
-        return jsonify({
-            "success": True,
-            "room_code": room_code,
-            "player_id": admin_id,
-            "is_admin": True
-        })
+        return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
     if room["password"] and password and room["password"] != password:
@@ -250,13 +228,20 @@ def room_status(room_code):
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     voted_count = len([p for p in active_players if p["voted_for"] is not None])
 
+    sanitized_players = []
+    for p in room["players"].values():
+        p_copy = p.copy()
+        if p_copy["id"] != player_id:
+            p_copy["voted_for"] = p["voted_for"] is not None
+        sanitized_players.append(p_copy)
+
     return jsonify({
         "code": room["code"],
         "seats": room["seats"],
         "status": room["status"],
         "round": room["round"],
         "admin_id": room["admin_id"],
-        "players": list(room["players"].values()),
+        "players": sanitized_players,
         "active_count": len(active_players),
         "voted_count": voted_count,
         "last_eliminated": room["last_eliminated"],
@@ -280,19 +265,13 @@ def update_profile():
     room = ROOMS[room_code]
     
     if player_id not in room["players"]:
-        room["players"][player_id] = {
-            "id": player_id,
-            "name": new_name if new_name else "Игрок",
-            "avatar": new_avatar if new_avatar else "🦁",
-            "status": "active",
-            "voted_for": None
-        }
-    else:
-        player = room["players"][player_id]
-        if new_name:
-            player["name"] = new_name
-        if new_avatar:
-            player["avatar"] = new_avatar
+        return jsonify({"error": "Игрок не зарегистрирован в бункере"}), 404
+    
+    player = room["players"][player_id]
+    if new_name:
+        player["name"] = new_name
+    if new_avatar:
+        player["avatar"] = new_avatar
 
     save_rooms()
     return jsonify({"success": True})
@@ -473,16 +452,26 @@ def tally_votes():
 
     # Eliminate candidate with strictly the highest number of votes AGAINST
     max_votes = -1
-    eliminated_id = None
+    candidates_with_max_votes = []
     for pid, count in tally.items():
         if count > max_votes:
             max_votes = count
-            eliminated_id = pid
+            candidates_with_max_votes = [pid]
+        elif count == max_votes:
+            candidates_with_max_votes.append(pid)
 
-    eliminated_player = room["players"].get(eliminated_id)
-    if eliminated_player and max_votes > 0:
-        eliminated_player["status"] = "eliminated"
-        room["last_eliminated"] = f"{eliminated_player.get('avatar', '👤')} {eliminated_player['name']}"
+    eliminated_id = None
+    if max_votes > 0:
+        if len(candidates_with_max_votes) == 1:
+            eliminated_id = candidates_with_max_votes[0]
+            eliminated_player = room["players"].get(eliminated_id)
+            if eliminated_player:
+                eliminated_player["status"] = "eliminated"
+                room["last_eliminated"] = f"{eliminated_player.get('avatar', '👤')} {eliminated_player['name']}"
+        else:
+            room["last_eliminated"] = "Ничья (никто не выбыл)"
+    else:
+        room["last_eliminated"] = "Никто не выбыл (нет голосов)"
 
     # Summary
     summary = {f"{room['players'][pid].get('avatar', '👤')} {room['players'][pid]['name']}": count for pid, count in tally.items()}
