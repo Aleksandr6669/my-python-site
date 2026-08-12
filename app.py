@@ -153,8 +153,34 @@ def join_room():
     if not room_code or not player_name:
         return jsonify({"error": "Заполните все поля"}), 400
 
+    # Auto-restore room on Vercel cold restart
     if room_code not in ROOMS or ROOMS[room_code].get("deleted"):
-        return jsonify({"error": "Бункер не найден"}), 404
+        created_at = time.time()
+        expires_at = created_at + (2 * 3600)
+        admin_id = str(uuid.uuid4())
+        ROOMS[room_code] = {
+            "code": room_code,
+            "password": password,
+            "seats": 3,
+            "status": "lobby",
+            "round": 1,
+            "created_at": created_at,
+            "expires_at": expires_at,
+            "deleted": False,
+            "admin_id": admin_id,
+            "players": {
+                admin_id: {"id": admin_id, "name": player_name, "avatar": avatar, "status": "active", "voted_for": None}
+            },
+            "last_eliminated": None,
+            "round_votes_summary": {}
+        }
+        save_rooms()
+        return jsonify({
+            "success": True,
+            "room_code": room_code,
+            "player_id": admin_id,
+            "is_admin": True
+        })
 
     room = ROOMS[room_code]
     if room["password"] and password and room["password"] != password:
@@ -210,13 +236,38 @@ def room_status(room_code):
     if room_code in ROOMS and ROOMS[room_code].get("deleted"):
         return jsonify({"error": "Бункер был удален организатором", "code": "ROOM_DELETED"}), 404
 
+    # Auto-restore room & player on Vercel cold restart if missing!
     if room_code not in ROOMS:
-        return jsonify({"error": "Бункер не найден", "code": "ROOM_NOT_FOUND"}), 404
+        created_at = time.time()
+        expires_at = created_at + (2 * 3600)
+        admin_id = player_id if player_id else str(uuid.uuid4())
+        ROOMS[room_code] = {
+            "code": room_code,
+            "password": "",
+            "seats": 3,
+            "status": "lobby",
+            "round": 1,
+            "created_at": created_at,
+            "expires_at": expires_at,
+            "deleted": False,
+            "admin_id": admin_id,
+            "players": {},
+            "last_eliminated": None,
+            "round_votes_summary": {}
+        }
+        save_rooms()
 
     room = ROOMS[room_code]
 
     if player_id and player_id not in room["players"]:
-        return jsonify({"error": "Игрок не найден в бункере", "code": "PLAYER_NOT_FOUND"}), 404
+        room["players"][player_id] = {
+            "id": player_id,
+            "name": "Игрок",
+            "avatar": "🦁",
+            "status": "active",
+            "voted_for": None
+        }
+        save_rooms()
 
     active_players = [p for p in room["players"].values() if p["status"] == "active"]
     voted_count = len([p for p in active_players if p["voted_for"] is not None])
@@ -248,14 +299,21 @@ def update_profile():
         return jsonify({"error": "Бункер не найден"}), 404
 
     room = ROOMS[room_code]
-    player = room["players"].get(player_id)
-    if not player:
-        return jsonify({"error": "Игрок не найден в бункере"}), 404
-
-    if new_name:
-        player["name"] = new_name
-    if new_avatar:
-        player["avatar"] = new_avatar
+    
+    if player_id not in room["players"]:
+        room["players"][player_id] = {
+            "id": player_id,
+            "name": new_name if new_name else "Игрок",
+            "avatar": new_avatar if new_avatar else "🦁",
+            "status": "active",
+            "voted_for": None
+        }
+    else:
+        player = room["players"][player_id]
+        if new_name:
+            player["name"] = new_name
+        if new_avatar:
+            player["avatar"] = new_avatar
 
     save_rooms()
     return jsonify({"success": True})

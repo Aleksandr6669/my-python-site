@@ -1377,7 +1377,7 @@
             }
         }
 
-        // Silent 1-Second Background Polling (NO auto-reconnect fallback that creates fake players!)
+        // Silent 1-Second Background Polling
         async function fetchRoomStatus(forcePopulateSettings = false) {
             if (!currentRoom) return;
 
@@ -1388,10 +1388,8 @@
                 if (res.status === 404) {
                     if (data.code === "ROOM_DELETED") {
                         Toast.fire({ icon: 'warning', title: 'Бункер был удален организатором!' });
-                    } else {
-                        Toast.fire({ icon: 'info', title: 'Сессия завершена или бункер закрыт' });
+                        leaveRoom();
                     }
-                    leaveRoom();
                     return;
                 }
 
