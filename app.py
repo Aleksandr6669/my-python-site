@@ -28,7 +28,7 @@ def save_rooms():
     except Exception as e:
         print("Save rooms error:", e)
 
-# Storage for rooms
+# Storage for rooms (DB File)
 ROOMS = load_rooms()
 
 def cleanup_expired_rooms():

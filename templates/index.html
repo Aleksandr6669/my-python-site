@@ -601,7 +601,7 @@
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
-                            <input type="text" id="joinPlayerName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerNameLocally(this.value)">
+                            <input type="text" id="joinPlayerName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerProfileLocally(this.value, selectedAvatar)">
                         </div>
                         <button class="btn" onclick="submitJoinRoom()"><i class="fa-solid fa-right-to-bracket"></i> Войти в Бункер</button>
                     </div>
@@ -623,7 +623,7 @@
                         </div>
                         <div class="form-group">
                             <label>Ваше Имя Игрока:</label>
-                            <input type="text" id="createAdminName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerNameLocally(this.value)">
+                            <input type="text" id="createAdminName" placeholder="Ваше имя" autocomplete="off" autocorrect="off" spellcheck="false" oninput="savePlayerProfileLocally(this.value, selectedAvatar)">
                         </div>
                         <div class="form-group">
                             <label>Мест в бункере (Победителей):</label>
@@ -898,12 +898,6 @@
         let listPollTimer = null;
         let previousEliminatedStatus = false;
 
-        function savePlayerNameLocally(val) {
-            if (val) {
-                localStorage.setItem('bunker_saved_name', val.trim());
-            }
-        }
-
         function savePlayerProfileLocally(name, avatar) {
             if (name) localStorage.setItem('bunker_saved_name', name.trim());
             if (avatar) localStorage.setItem('bunker_saved_avatar', avatar);
@@ -1034,7 +1028,7 @@
                         <div class="room-item-card" onclick="openJoinStep('${r.code}')">
                             <div>
                                 <strong style="color: var(--danger-red); font-size: 1rem;">Код: ${displayCode}</strong>
-                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Кандидатов: ${r.active_count} | Мест в бункеере: ${r.seats}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Кандидатов: ${r.active_count} | Мест в бункере: ${r.seats}</div>
                             </div>
                             <span class="badge badge-active">Войти ➔</span>
                         </div>
