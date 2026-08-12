@@ -200,7 +200,7 @@
             overflow-y: auto;
             padding: 16px;
             margin-top: calc(54px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(80px + env(safe-area-inset-bottom, 12px));
+            padding-bottom: calc(76px + env(safe-area-inset-bottom, 12px));
         }
 
         /* Glossy Glassmorphic Cards */
@@ -452,23 +452,28 @@
             display: block;
         }
 
-        /* Balanced Glassmorphic Floating Bottom Navigation Dock */
+        /* UNIVERSAL FIXED BOTTOM NAVIGATION BAR (FLUSH ANCHORED ON IOS & ANDROID) */
         nav.bottom-nav {
-            position: absolute;
-            bottom: calc(4px + env(safe-area-inset-bottom, 0px));
-            left: 12px;
-            right: 12px;
-            height: 58px;
-            background: rgba(15, 23, 42, 0.88);
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            height: calc(56px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-top: 4px;
+            padding-left: 10px;
+            padding-right: 10px;
+            background: rgba(15, 23, 42, 0.94);
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
             align-items: center;
             z-index: 1000;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55), var(--border-glow);
+            box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6), var(--border-glow);
         }
 
         .nav-item {
@@ -482,8 +487,8 @@
             cursor: pointer;
             gap: 2px;
             width: 31%;
-            height: 46px;
-            border-radius: 14px;
+            height: 44px;
+            border-radius: 12px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -775,7 +780,7 @@
 
         </main>
 
-        <!-- BALANCED GLASSMORPHIC FLOATING BOTTOM NAVIGATION DOCK -->
+        <!-- UNIVERSAL FIXED BOTTOM NAVIGATION DOCK (FLUSH ANCHORED ON IOS & ANDROID) -->
         <nav class="bottom-nav" id="bottomNav" style="display: none;">
             <div class="nav-item active" onclick="switchTab('panelBunker', this)">
                 <span class="icon"><i class="fa-solid fa-users"></i></span>
